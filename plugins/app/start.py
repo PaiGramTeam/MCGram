@@ -16,7 +16,7 @@ class StartPlugin(Plugin):
         logger.info("用户 %s[%s] 发出start命令 args[%s]", user.full_name, user.id, args_text)
         if args is not None and len(args) >= 1:
             return
-        await message.reply_markdown_v2(f"你好 {user.mention_markdown_v2()} {escape_markdown('！我是派蒙 ！')}")
+        await message.reply_markdown_v2(f"你好 {user.mention_markdown_v2()} {escape_markdown('！我是凌阳 ！')}")
 
     @staticmethod
     async def unknown_command(update: Update, _: CallbackContext) -> None:
@@ -24,7 +24,7 @@ class StartPlugin(Plugin):
 
     @staticmethod
     async def emergency_food(update: Update, _: CallbackContext) -> None:
-        await update.effective_message.reply_text("派蒙才不是应急食品！")
+        await update.effective_message.reply_text("凌阳才不是应急食品！")
 
     @handler(CommandHandler, command="ping", block=False)
     async def ping(self, update: Update, _: CallbackContext) -> None:

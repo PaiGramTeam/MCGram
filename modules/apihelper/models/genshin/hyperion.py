@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
 from io import BytesIO
 from typing import Any, List, Optional
 
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, PrivateAttr
 
-__all__ = ("ArtworkImage", "PostInfo", "LiveInfo", "LiveCode", "LiveCodeHoYo")
+__all__ = ("ArtworkImage", "PostInfo")
 
 
 class ArtworkImage(BaseModel):
@@ -56,11 +55,9 @@ class ArtworkImage(BaseModel):
 class PostInfo(BaseModel):
     _data: dict = PrivateAttr()
     post_id: int
-    user_uid: int
     subject: str
     image_urls: List[str]
-    created_at: int
-    video_urls: List[str]
+    created_at: str
 
     def __init__(self, _data: dict, **data: Any):
         super().__init__(**data)
@@ -68,60 +65,34 @@ class PostInfo(BaseModel):
 
     @classmethod
     def paste_data(cls, data: dict) -> "PostInfo":
-        _data_post = data["post"]
-        post = _data_post["post"]
-        post_id = post["post_id"]
-        subject = post["subject"]
-        image_list = _data_post["image_list"]
-        image_urls = [image["url"] for image in image_list]
-        vod_list = _data_post["vod_list"]
-        video_urls = [vod["resolutions"][-1]["url"] for vod in vod_list]
-        created_at = post["created_at"]
-        user = _data_post["user"]  # 用户数据
-        user_uid = user["uid"]  # 用户ID
+        _data_post = data["data"]
+        post = _data_post["postDetail"]
+        post_id = post["id"]
+        subject = post["postTitle"]
+        cover_images = post["coverImages"]
+        image_urls1 = [image["url"] for image in cover_images]
+        post_content = post["postContent"]
+        image_urls2 = []
+        skip_focus = False
+        for image in post_content:
+            content_type = image.get("contentType")
+            if content_type == 1:
+                if image.get("content") == "关注库街区《鸣潮》官方账号，获取更多《鸣潮》资讯。":
+                    skip_focus = True
+            elif content_type == 2:
+                if skip_focus:
+                    skip_focus = False
+                    continue
+                image_urls2.append(image["url"])
+        image_urls = image_urls2 if image_urls2 else image_urls1
+        created_at = post["postTime"]
         return PostInfo(
             _data=data,
             post_id=post_id,
-            user_uid=user_uid,
             subject=subject,
             image_urls=image_urls,
-            video_urls=video_urls,
             created_at=created_at,
         )
 
     def __getitem__(self, item):
         return self._data[item]
-
-
-class LiveInfo(BaseModel):
-    act_type: str
-    title: str
-    live_time: str
-    start: datetime
-    end: datetime
-    remain: int
-    now: datetime
-    is_end: bool
-    code_ver: str
-
-
-class LiveCode(BaseModel):
-    code: str
-    to_get_time: datetime
-
-    @property
-    def text(self) -> str:
-        return self.code if self.code else "XXXXXXXXXXXX"
-
-
-class LiveCodeHoYo(BaseModel):
-    exchange_code: str
-    offline_at: datetime
-
-    @property
-    def text(self) -> str:
-        return self.exchange_code if self.exchange_code else "XXXXXXXXXXXX"
-
-    @staticmethod
-    def guess_offline_at() -> datetime:
-        return datetime.now().replace(hour=12, minute=0, second=0, microsecond=0) + timedelta(days=1)

@@ -33,7 +33,8 @@ from modules.errorpush import (
     SentryClient,
     SentryClientException,
 )
-from plugins.tools.genshin import CookiesNotFoundError, PlayerNotFoundError as GenshinPlayerNotFoundError
+
+# from plugins.tools.genshin import CookiesNotFoundError, PlayerNotFoundError as GenshinPlayerNotFoundError
 from utils.log import logger
 
 try:
@@ -108,7 +109,7 @@ class ErrorHandler(Plugin):
             )
             # recommend: channel alias
             if message and message.sender_chat:
-                content += "\n\n推荐使用 /channel_alias 开启频道透视模式，派蒙将会把你当做普通用户运行命令。"
+                content += "\n\n推荐使用 /channel_alias 开启频道透视模式，凌阳将会把你当做普通用户运行命令。"
         else:
             buttons = ReplyKeyboardRemove()
 
@@ -262,15 +263,15 @@ class ErrorHandler(Plugin):
             self.create_notice_task(update, context, notice)
             raise ApplicationHandlerStop
 
-    @error_handler()
-    async def process_player_and_cookie_not_found(self, update: object, context: CallbackContext):
-        if not isinstance(
-            context.error, (CookiesNotFoundError, PlayerNotFoundError, GenshinPlayerNotFoundError)
-        ) or not isinstance(update, Update):
-            return
-        notice = "未查询到您所绑定的账号信息，请先私聊派蒙绑定账号"
-        self.create_notice_task(update, context, notice)
-        raise ApplicationHandlerStop
+    # @error_handler()
+    # async def process_player_and_cookie_not_found(self, update: object, context: CallbackContext):
+    #     if not isinstance(
+    #         context.error, (CookiesNotFoundError, PlayerNotFoundError, GenshinPlayerNotFoundError)
+    #     ) or not isinstance(update, Update):
+    #         return
+    #     notice = "未查询到您所绑定的账号信息，请先私聊凌阳绑定账号"
+    #     self.create_notice_task(update, context, notice)
+    #     raise ApplicationHandlerStop
 
     @error_handler(block=False)
     async def process_z_error(self, update: object, context: CallbackContext) -> None:
@@ -291,7 +292,7 @@ class ErrorHandler(Plugin):
                         chat.id,
                         update.update_id,
                     )
-                    text = "出错了呜呜呜 ~ 派蒙这边发生了点问题无法处理！"
+                    text = "出错了呜呜呜 ~ 凌阳这边发生了点问题无法处理！"
                     await context.bot.send_message(
                         effective_message.chat_id, text, reply_markup=ReplyKeyboardRemove(), parse_mode=ParseMode.HTML
                     )

@@ -23,7 +23,7 @@ from telegram.helpers import escape_markdown
 
 from core.config import config
 from core.plugin import Plugin, conversation, handler
-from modules.apihelper.client.components.hyperion import Hyperion
+from modules.apihelper.client.components.mcbbs import MCBBS
 from modules.apihelper.error import APIHelperException
 from utils.helpers import sha1
 from utils.log import logger
@@ -54,15 +54,15 @@ class Post(Plugin.Conversation):
     MENU_KEYBOARD = ReplyKeyboardMarkup([["推送频道", "添加TAG"], ["编辑文字", "删除图片"], ["退出"]], True, True)
 
     def __init__(self):
-        self.gids = 2
-        self.short_name = "ys"
+        self.gids = 3
+        self.short_name = "mc"
         self.last_post_id_list: List[int] = []
         self.ffmpeg_enable = False
         self.cache_dir = os.path.join(os.getcwd(), "cache")
 
     @staticmethod
-    def get_bbs_client() -> Hyperion:
-        return Hyperion(
+    def get_bbs_client() -> MCBBS:
+        return MCBBS(
             timeout=Timeout(
                 connect=config.connect_timeout,
                 read=config.read_timeout,
@@ -95,8 +95,8 @@ class Post(Plugin.Conversation):
             logger.error("获取首页推荐信息失败 %s", str(exc))
             return
 
-        for data_list in official_recommended_posts["list"]:
-            temp_post_id_list.append(data_list["post_id"])
+        for data_list in official_recommended_posts["data"]:
+            temp_post_id_list.append(data_list["postId"])
 
         # 判断是否为空
         if len(self.last_post_id_list) == 0:
@@ -114,7 +114,7 @@ class Post(Plugin.Conversation):
 
         for post_id in new_post_id_list:
             try:
-                post_info = await bbs.get_post_info(self.gids, post_id)
+                post_info = await bbs.get_post_info(post_id)
             except APIHelperException as exc:
                 logger.error("获取文章信息失败 %s", str(exc))
                 text = f"获取 post_id[{post_id}] 文章信息失败 {str(exc)}"
@@ -129,7 +129,7 @@ class Post(Plugin.Conversation):
                     InlineKeyboardButton("取消", callback_data=f"post_admin|cancel|{post_info.post_id}"),
                 ]
             ]
-            url = f"https://www.miyoushe.pp.ua/{self.short_name}/article/{post_info.post_id}"
+            url = f"https://www.kurobbs.com/{self.short_name}/post/{post_info.post_id}"
             text = f"发现官网推荐文章 <a href='{url}'>{post_info.subject}</a>\n是否开始处理"
             try:
                 await context.bot.send_message(
@@ -142,12 +142,14 @@ class Post(Plugin.Conversation):
     @staticmethod
     def parse_post_text(soup: BeautifulSoup, post_subject: str) -> Tuple[str, bool]:
         def parse_tag(_tag: "Tag") -> str:
-            if _tag.name == "a":
-                href = _tag.get("href")
-                if href and href.startswith("/"):
-                    href = f"https://www.miyoushe.com{href}"
-                if href and href.startswith("http"):
-                    return f"[{escape_markdown(_tag.get_text(), version=2)}]({href})"
+            if _tag.name == "div" and "w-e_link-card" in _tag["class"]:
+                spans = _tag.find_all("span")
+                try:
+                    text, href = spans[0].get_text(), spans[1].get_text()
+                    if href.startswith("http"):
+                        return f"[{escape_markdown(text, version=2)}]({href})"
+                except Exception:
+                    pass
             return escape_markdown(_tag.get_text(), version=2)
 
         post_text = f"*{escape_markdown(post_subject, version=2)}*\n\n"
@@ -307,7 +309,7 @@ class Post(Plugin.Conversation):
             await message.reply_text("退出投稿", reply_markup=ReplyKeyboardRemove())
             return ConversationHandler.END
 
-        post_id = Hyperion.extract_post_id(update.message.text)
+        post_id = MCBBS.extract_post_id(update.message.text)
         if post_id == -1:
             await message.reply_text("获取作品ID错误，请检查连接是否合法", reply_markup=ReplyKeyboardRemove())
             return ConversationHandler.END
@@ -315,15 +317,14 @@ class Post(Plugin.Conversation):
 
     async def send_post_info(self, post_handler_data: PostHandlerData, message: "Message", post_id: int) -> int:
         bbs = self.get_bbs_client()
-        post_info = await bbs.get_post_info(self.gids, post_id)
-        post_images = await bbs.get_images_by_post_id(self.gids, post_id)
+        post_info = await bbs.get_post_info(post_id)
+        post_images = await bbs.get_images_by_post_id(post_info)
         await bbs.close()
         post_images = await self.gif_to_mp4(post_images)
-        post_data = post_info["post"]["post"]
-        post_subject = post_data["subject"]
-        post_soup = BeautifulSoup(post_data["content"], features="html.parser")
-        post_text, too_long = self.parse_post_text(post_soup, post_subject)
-        post_text += f"\n[source](https://www.miyoushe.com/{self.short_name}/article/{post_id})"
+        post_data = post_info["data"]["postDetail"]
+        post_soup = BeautifulSoup(post_data["postH5Content"], features="html.parser")
+        post_text, too_long = self.parse_post_text(post_soup, post_info.subject)
+        post_text += f"\n[source](https://www.kurobbs.com/{self.short_name}/post/{post_id})"
         if too_long or len(post_text) >= MessageLimit.CAPTION_LENGTH:
             post_text = post_text[: MessageLimit.CAPTION_LENGTH]
             await message.reply_text(f"警告！图片字符描述已经超过 {MessageLimit.CAPTION_LENGTH} 个字，已经切割")
