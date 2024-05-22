@@ -322,7 +322,7 @@ class Post(Plugin.Conversation):
         await bbs.close()
         post_images = await self.gif_to_mp4(post_images)
         post_data = post_info["data"]["postDetail"]
-        post_soup = BeautifulSoup(post_data["postH5Content"], features="html.parser")
+        post_soup = BeautifulSoup(post_data.get("postH5Content", ""), features="html.parser")
         post_text, too_long = self.parse_post_text(post_soup, post_info.subject)
         post_text += f"\n[source](https://www.kurobbs.com/{self.short_name}/post/{post_id})"
         if too_long or len(post_text) >= MessageLimit.CAPTION_LENGTH:
