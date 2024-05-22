@@ -68,10 +68,10 @@ class PostInfo(BaseModel):
         _data_post = data["data"]
         post = _data_post["postDetail"]
         post_id = post["id"]
-        subject = post["postTitle"]
-        cover_images = post["coverImages"]
+        subject = post.get("postTitle", "")
+        cover_images = post.get("coverImages", [])
         image_urls1 = [image["url"] for image in cover_images]
-        post_content = post["postContent"]
+        post_content = post.get("postContent", [])
         image_urls2 = []
         skip_focus = False
         for image in post_content:
@@ -83,9 +83,11 @@ class PostInfo(BaseModel):
                 if skip_focus:
                     skip_focus = False
                     continue
-                image_urls2.append(image["url"])
+                image_url = image.get("url")
+                if image_url:
+                    image_urls2.append(image_url)
         image_urls = image_urls2 if image_urls2 else image_urls1
-        created_at = post["postTime"]
+        created_at = post.get("postTime", "")
         return PostInfo(
             _data=data,
             post_id=post_id,
