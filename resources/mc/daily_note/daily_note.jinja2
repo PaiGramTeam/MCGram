@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+    <link rel="shortcut icon" href="#"/>
+    <link rel="stylesheet" type="text/css" href="./daily_note.css"/>
+</head>
+<body>
+<div class="container" id="container">
+    <div class="title">
+        <div class="id">
+            <span>ID：{{ uid }}</span>
+        </div>
+        <div class="day">
+            <span>{{ day }}</span>
+        </div>
+    </div>
+    <div class="item">
+        <div class="main">
+            <div class="bg"></div>
+            <img class="icon" src="items/结晶波片.png" alt=""/>
+            <div class="info">
+                <div class="name">结晶波片</div>
+                <div class="time">
+                    {% if resin_recovery_time %}
+                        将于{{ resin_recovery_time }} 全部恢复
+                    {% else %}
+                        结晶波片已完全恢复
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="right">
+          <span class="{% if current_resin/(max_resin or 1) > 0.9 %}red{% endif %}">
+            {{ current_resin }}/{{ max_resin }}
+          </span>
+        </div>
+    </div>
+    {% if liveness_unlock %}
+    <div class="item">
+        <div class="main">
+            <div class="bg"></div>
+            <img class="icon" src="items/liveness.png" alt=""/>
+            <div class="info">
+                <div class="name">活跃度</div>
+                <div class="time">
+                    {% if current_train_score == max_train_score %}
+                    每日已完成
+                    {% else %}
+                    每日未完成
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="right">
+          <span
+           class="{% if current_train_score != max_train_score %}red{% endif %}"
+          >{{ current_train_score }}/{{ max_train_score }}</span>
+        </div>
+    </div>
+    {% endif %}
+    {% for battle in battle_pass_data %}
+    <div class="item">
+        <div class="main">
+            <div class="bg"></div>
+            <img class="icon" src="items/电台.png" alt=""/>
+            <div class="info">
+                <div class="name">{{ battle.name }}</div>
+                {% if battle.total != 0 %}
+                <div class="time">
+                    {% if battle.cur == battle.total %}
+                    已完成
+                    {% else %}
+                    未完成
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="right">
+            {% if battle.total != 0 %}
+            <span
+             class="{% if battle.cur != battle.total %}red{% endif %}"
+            >{{ battle.cur }}/{{ battle.total }}</span>
+            {% else %}
+            <span>
+                {{ battle.cur }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+</body>
+<script type="text/javascript"></script>
+</html>

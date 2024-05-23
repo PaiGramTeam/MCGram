@@ -6,14 +6,14 @@ from typing import Optional
 
 import aiofiles
 from httpx import HTTPError, TimeoutException
-from simnet.errors import (
+from kuronet.errors import (
     DataNotPublic,
     BadRequest as SIMNetBadRequest,
     InvalidCookies,
     TooManyRequests,
     CookieException,
     TimedOut as SIMNetTimedOut,
-    SIMNetException,
+    KuroNetException as SIMNetException,
     NeedChallenge,
     InvalidDevice,
 )
