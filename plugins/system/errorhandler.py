@@ -34,7 +34,7 @@ from modules.errorpush import (
     SentryClientException,
 )
 
-# from plugins.tools.genshin import CookiesNotFoundError, PlayerNotFoundError as GenshinPlayerNotFoundError
+from plugins.tools.genshin import CookiesNotFoundError, PlayerNotFoundError as GenshinPlayerNotFoundError
 from utils.log import logger
 
 try:
@@ -263,15 +263,15 @@ class ErrorHandler(Plugin):
             self.create_notice_task(update, context, notice)
             raise ApplicationHandlerStop
 
-    # @error_handler()
-    # async def process_player_and_cookie_not_found(self, update: object, context: CallbackContext):
-    #     if not isinstance(
-    #         context.error, (CookiesNotFoundError, PlayerNotFoundError, GenshinPlayerNotFoundError)
-    #     ) or not isinstance(update, Update):
-    #         return
-    #     notice = "未查询到您所绑定的账号信息，请先私聊凌阳绑定账号"
-    #     self.create_notice_task(update, context, notice)
-    #     raise ApplicationHandlerStop
+    @error_handler()
+    async def process_player_and_cookie_not_found(self, update: object, context: CallbackContext):
+        if not isinstance(
+            context.error, (CookiesNotFoundError, PlayerNotFoundError, GenshinPlayerNotFoundError)
+        ) or not isinstance(update, Update):
+            return
+        notice = "未查询到您所绑定的账号信息，请先私聊凌阳绑定账号"
+        self.create_notice_task(update, context, notice)
+        raise ApplicationHandlerStop
 
     @error_handler(block=False)
     async def process_z_error(self, update: object, context: CallbackContext) -> None:
