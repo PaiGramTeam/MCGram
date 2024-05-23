@@ -66,7 +66,7 @@ class SetCommandPlugin(Plugin):
             # BotCommand("abyss_team", "查询深渊推荐配队"),
             # BotCommand("abyss_history", "查询深渊历史战绩"),
             # BotCommand("avatars", "查询角色练度"),
-            # BotCommand("reg_time", "账号注册时间"),
+            BotCommand("reg_time", "账号注册时间"),
             # BotCommand("daily_material", "今日素材表"),
             BotCommand("cookies_import", "从其他 BOT 导入账号信息"),
             BotCommand("cookies_export", "导出账号信息给其他 BOT"),

@@ -47,7 +47,7 @@ class PlayerStatsPlugins(Plugin):
         except AttributeError as exc:
             logger.error("角色数据有误")
             logger.exception(exc)
-            await message.reply_text("角色数据有误 估计是派蒙晕了")
+            await message.reply_text("角色数据有误 估计是凌阳晕了")
             return
         except ValueError as exc:
             logger.warning("获取 uid 发生错误！ 错误信息为 %s", str(exc))
