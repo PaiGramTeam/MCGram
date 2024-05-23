@@ -117,8 +117,12 @@ class AccountCookiesPlugin(Plugin.Conversation):
             await message.reply_text("选择错误，请重新选择")
             return CHECK_SERVER
         account_cookies_plugin_data.region = region
-        await message.reply_text(f"请输入{bbs_name}的 user_token ！或回复退出取消操作", reply_markup=ReplyKeyboardRemove())
-        await message.reply_html("<b>关于如何获取 user_token </b>\n\nhttps://telegra.ph/paigramteam-bot-usertoken-05-23")
+        await message.reply_text(
+            f"请输入{bbs_name}的 user_token ！或回复退出取消操作", reply_markup=ReplyKeyboardRemove()
+        )
+        await message.reply_html(
+            "<b>关于如何获取 user_token </b>\n\nhttps://telegra.ph/paigramteam-bot-usertoken-05-23"
+        )
         return INPUT_COOKIES
 
     @conversation.state(state=INPUT_COOKIES)
@@ -161,9 +165,7 @@ class AccountCookiesPlugin(Plugin.Conversation):
             return ConversationHandler.END
         async with MCClient(cookies=cookies.to_dict(), region=region) as client:
             if not cookies.user_token:
-                await message.reply_text(
-                    "user_token 异常，请尝试重新绑定。", reply_markup=ReplyKeyboardRemove()
-                )
+                await message.reply_text("user_token 异常，请尝试重新绑定。", reply_markup=ReplyKeyboardRemove())
                 return ConversationHandler.END
             try:
                 if region == Region.CHINESE:

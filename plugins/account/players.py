@@ -135,6 +135,7 @@ class PlayersManagesPlugin(Plugin):
             f"这里是 {player.player_id} {player_info.nickname}\n你想用这个账号做什么？",
             reply_markup=InlineKeyboardMarkup(buttons),
         )
+
     #
     # @handler.callback_query(r"^players_manager\|update\|", block=False)
     # async def update_user(self, update: "Update", _: "ContextTypes.DEFAULT_TYPE") -> None:
