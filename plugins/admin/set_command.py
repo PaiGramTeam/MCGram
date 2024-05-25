@@ -31,7 +31,7 @@ class SetCommandPlugin(Plugin):
             # BotCommand("pay_log_export", "导出充值记录"),
             # BotCommand("pay_log_delete", "删除充值记录"),
             # # Cookie 查询类
-            # BotCommand("sign", "米游社原神每日签到"),
+            BotCommand("sign", "库街区鸣潮每日签到"),
             # BotCommand("dailynote_tasks", "自动便笺提醒"),
             # # 其他
             # BotCommand("hilichurls", "丘丘语字典"),
@@ -79,7 +79,7 @@ class SetCommandPlugin(Plugin):
             # BotCommand("refresh_map", "刷新地图数据"),
             # BotCommand("save_entry", "保存条目数据"),
             # BotCommand("remove_all_entry", "删除全部条目数据"),
-            # BotCommand("sign_all", "全部账号重新签到"),
+            BotCommand("sign_all", "全部账号重新签到"),
             BotCommand("send_log", "发送日志"),
             BotCommand("update", "更新"),
             BotCommand("set_command", "重设命令"),
