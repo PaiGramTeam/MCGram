@@ -36,7 +36,7 @@ class SetCommandPlugin(Plugin):
             # # 其他
             # BotCommand("hilichurls", "丘丘语字典"),
             # BotCommand("birthday", "查询角色生日"),
-            # BotCommand("setuid", "添加/重设UID"),
+            BotCommand("setuid", "添加/重设UID"),
             BotCommand("setcookie", "添加/重设Cookie"),
             # BotCommand("setdevice", "添加/重设设备"),
             BotCommand("player", "管理用户绑定玩家"),
@@ -55,7 +55,7 @@ class SetCommandPlugin(Plugin):
             # BotCommand("strategy", "查询角色攻略"),
             # BotCommand("material", "角色培养素材查询"),
             # # UID 查询类
-            # BotCommand("stats", "玩家统计查询"),
+            BotCommand("stats", "玩家统计查询"),
             # BotCommand("player_card", "查询角色卡片"),
             # BotCommand("avatar_board", "角色排名"),
             # BotCommand("gcsim", "组队伤害计算"),
@@ -75,7 +75,7 @@ class SetCommandPlugin(Plugin):
             BotCommand("add_admin", "添加管理员"),
             BotCommand("del_admin", "删除管理员"),
             # BotCommand("refresh_metadata", "刷新元数据"),
-            # BotCommand("refresh_wiki", "刷新Wiki缓存"),
+            BotCommand("refresh_wiki", "刷新Wiki缓存"),
             # BotCommand("refresh_map", "刷新地图数据"),
             # BotCommand("save_entry", "保存条目数据"),
             # BotCommand("remove_all_entry", "删除全部条目数据"),
