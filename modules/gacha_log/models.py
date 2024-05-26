@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Union
 from pydantic import BaseModel, validator
 
 from metadata.shortname import not_real_roles, roleToId, weaponToId
-from modules.gacha_log.const import UIGF_VERSION
+from modules.gacha_log.const import UIMF_VERSION
 
 
 class ImportType(Enum):
@@ -51,8 +51,8 @@ class GachaItem(BaseModel):
 
     @validator("gacha_type")
     def check_gacha_type(cls, v):
-        if v not in {"100", "200", "301", "302", "400", "500"}:
-            raise ValueError(f"gacha_type must be 200, 301, 302, 400, 500, invalid value: {v}")
+        if v not in {"1", "2", "3", "4", "5", "6", "7"}:
+            raise ValueError(f"gacha_type must be 1, 2, 3, 4, 5, 6, 7, invalid value: {v}")
         return v
 
     @validator("item_type")
@@ -77,8 +77,8 @@ class GachaLogInfo(BaseModel):
         "角色祈愿": [],
         "武器祈愿": [],
         "常驻祈愿": [],
+        "常驻武器祈愿": [],
         "新手祈愿": [],
-        "集录祈愿": [],
     }
 
     @property
@@ -136,12 +136,13 @@ class ItemType(Enum):
 
 
 class UIGFGachaType(Enum):
-    BEGINNER = "100"
-    STANDARD = "200"
-    CHARACTER = "301"
-    WEAPON = "302"
-    CHARACTER2 = "400"
-    CHRONICLED = "500"
+    BEGINNER = "5"
+    BEGINNER1 = "6"
+    BEGINNER2 = "7"
+    STANDARD_WEAPON = "4"
+    STANDARD = "3"
+    CHARACTER = "1"
+    WEAPON = "2"
 
 
 class UIGFItem(BaseModel):
@@ -163,7 +164,7 @@ class UIGFInfo(BaseModel):
     export_timestamp: int = 0
     export_app: str = ""
     export_app_version: str = ""
-    uigf_version: str = UIGF_VERSION
+    uigf_version: str = UIMF_VERSION
     region_time_zone: int = 8
 
     def __init__(self, **data: Any):

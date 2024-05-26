@@ -8,11 +8,10 @@ from pathlib import Path
 from typing import Dict, IO, List, Optional, Tuple, Union, TYPE_CHECKING
 
 import aiofiles
+from kuronet import MCClient, Region
+from kuronet.errors import AuthkeyTimeout, InvalidAuthkey
+from kuronet.models.mc.wish import MCBannerType
 from openpyxl import load_workbook
-from simnet import GenshinClient, Region
-from simnet.errors import AuthkeyTimeout, InvalidAuthkey
-from simnet.models.genshin.wish import BannerType
-from simnet.utils.player import recognize_genshin_server
 
 from metadata.pool.pool import get_pool_by_id
 from metadata.shortname import roleToId, weaponToId
@@ -47,7 +46,7 @@ if TYPE_CHECKING:
     from core.dependence.assets import AssetsService
 
 
-GACHA_LOG_PATH = PROJECT_ROOT.joinpath("data", "apihelper", "gacha_log")
+GACHA_LOG_PATH = PROJECT_ROOT.joinpath("data", "apihelper", "summon_log")
 GACHA_LOG_PATH.mkdir(parents=True, exist_ok=True)
 
 
@@ -192,7 +191,7 @@ class GachaLog:
     def import_data_backend(all_items: List[GachaItem], gacha_log: GachaLogInfo, temp_id_data: Dict) -> int:
         new_num = 0
         for item_info in all_items:
-            pool_name = GACHA_TYPE_LIST[BannerType(int(item_info.gacha_type))]
+            pool_name = GACHA_TYPE_LIST[MCBannerType(int(item_info.gacha_type))]
             if pool_name not in temp_id_data:
                 temp_id_data[pool_name] = []
             if pool_name not in gacha_log.item_list:
@@ -251,10 +250,8 @@ class GachaLog:
             raise GachaLogException from exc
 
     @staticmethod
-    def get_game_client(player_id: int) -> GenshinClient:
-        if recognize_genshin_server(player_id) in ["cn_gf01", "cn_qd01"]:
-            return GenshinClient(player_id=player_id, region=Region.CHINESE, lang="zh-cn")
-        return GenshinClient(player_id=player_id, region=Region.OVERSEAS, lang="zh-cn")
+    def get_game_client(player_id: int) -> MCClient:
+        return MCClient(player_id=player_id, region=Region.CHINESE, lang="zh-cn")
 
     async def get_gacha_log_data(self, user_id: int, player_id: int, authkey: str) -> int:
         """使用authkey获取抽卡记录数据，并合并旧数据
@@ -272,7 +269,7 @@ class GachaLog:
         client = self.get_game_client(player_id)
         try:
             for pool_id, pool_name in GACHA_TYPE_LIST.items():
-                wish_history = await client.wish_history(pool_id.value, authkey=authkey)
+                wish_history = await client.wish_history(authkey, pool_id.value, player_id=player_id)
                 for data in wish_history:
                     item = GachaItem(
                         id=str(data.id),
@@ -312,19 +309,7 @@ class GachaLog:
         return new_num
 
     @staticmethod
-    def check_avatar_up(name: str, gacha_time: datetime.datetime) -> bool:
-        if name in {"莫娜", "七七", "迪卢克", "琴", "迪希雅"}:
-            return False
-        if name == "刻晴":
-            start_time = datetime.datetime.strptime("2021-02-17 18:00:00", "%Y-%m-%d %H:%M:%S")
-            end_time = datetime.datetime.strptime("2021-03-02 15:59:59", "%Y-%m-%d %H:%M:%S")
-            if not start_time < gacha_time < end_time:
-                return False
-        elif name == "提纳里":
-            start_time = datetime.datetime.strptime("2022-08-24 06:00:00", "%Y-%m-%d %H:%M:%S")
-            end_time = datetime.datetime.strptime("2022-09-09 17:59:59", "%Y-%m-%d %H:%M:%S")
-            if not start_time < gacha_time < end_time:
-                return False
+    def check_avatar_up(_: str, __: datetime.datetime) -> bool:
         return True
 
     async def get_all_5_star_items(self, data: List[GachaItem], assets: "AssetsService", pool_name: str = "角色祈愿"):
@@ -340,10 +325,10 @@ class GachaLog:
         for item in data:
             count += 1
             if item.rank_type == "5":
-                if item.item_type == "角色" and pool_name in {"角色祈愿", "常驻祈愿", "新手祈愿", "集录祈愿"}:
+                if item.item_type == "角色" and pool_name in {"角色祈愿", "常驻祈愿", "新手祈愿"}:
                     data = {
                         "name": item.name,
-                        "icon": (await assets.avatar(roleToId(item.name)).icon()).as_uri(),
+                        "icon": (assets.avatar.normal(roleToId(item.name))).as_uri(),
                         "count": count,
                         "type": "角色",
                         "isUp": self.check_avatar_up(item.name, item.time) if pool_name == "角色祈愿" else False,
@@ -351,10 +336,10 @@ class GachaLog:
                         "time": item.time,
                     }
                     result.append(FiveStarItem.construct(**data))
-                elif item.item_type == "武器" and pool_name in {"武器祈愿", "常驻祈愿", "新手祈愿", "集录祈愿"}:
+                elif item.item_type == "武器" and pool_name in {"武器祈愿", "常驻武器祈愿", "新手祈愿"}:
                     data = {
                         "name": item.name,
-                        "icon": (await assets.weapon(weaponToId(item.name)).icon()).as_uri(),
+                        "icon": (assets.weapon.icon(weaponToId(item.name))).as_uri(),
                         "count": count,
                         "type": "武器",
                         "isUp": False,
@@ -382,7 +367,7 @@ class GachaLog:
                 if item.item_type == "角色":
                     data = {
                         "name": item.name,
-                        "icon": (await assets.avatar(roleToId(item.name)).icon()).as_uri(),
+                        "icon": (assets.avatar.normal(roleToId(item.name))).as_uri(),
                         "count": count,
                         "type": "角色",
                         "time": item.time,
@@ -391,7 +376,7 @@ class GachaLog:
                 elif item.item_type == "武器":
                     data = {
                         "name": item.name,
-                        "icon": (await assets.weapon(weaponToId(item.name)).icon()).as_uri(),
+                        "icon": (assets.weapon.icon(weaponToId(item.name))).as_uri(),
                         "count": count,
                         "type": "武器",
                         "time": item.time,
@@ -557,7 +542,7 @@ class GachaLog:
                     return f"{pool_name} · 非"
         return pool_name
 
-    async def get_analysis(self, user_id: int, player_id: int, pool: BannerType, assets: "AssetsService"):
+    async def get_analysis(self, user_id: int, player_id: int, pool: MCBannerType, assets: "AssetsService"):
         """
         获取抽卡记录分析数据
         :param user_id: 用户id
@@ -579,16 +564,16 @@ class GachaLog:
         all_five, no_five_star = await self.get_all_5_star_items(data, assets, pool_name)
         all_four, no_four_star = await self.get_all_4_star_items(data, assets)
         summon_data = None
-        if pool in [BannerType.CHARACTER1, BannerType.CHARACTER2, BannerType.NOVICE]:
+        if pool == MCBannerType.CHARACTER:
             summon_data = self.get_301_pool_data(total, all_five, no_five_star, no_four_star)
             pool_name = self.count_fortune(pool_name, summon_data)
-        elif pool == BannerType.WEAPON:
+        elif pool == MCBannerType.WEAPON:
             summon_data = self.get_302_pool_data(total, all_five, all_four, no_five_star, no_four_star)
             pool_name = self.count_fortune(pool_name, summon_data, True)
-        elif pool == BannerType.PERMANENT:
+        elif pool in [MCBannerType.STANDARD, MCBannerType.STANDARD_WEAPON]:
             summon_data = self.get_200_pool_data(total, all_five, all_four, no_five_star, no_four_star)
             pool_name = self.count_fortune(pool_name, summon_data)
-        elif pool == BannerType.CHRONICLED:
+        elif pool == MCBannerType.TEMPORARY:
             summon_data = self.get_500_pool_data(total, all_five, all_four, no_five_star, no_four_star)
             pool_name = self.count_fortune(pool_name, summon_data)
         last_time = data[0].time.strftime("%Y-%m-%d %H:%M")
@@ -606,7 +591,7 @@ class GachaLog:
         }
 
     async def get_pool_analysis(
-        self, user_id: int, player_id: int, pool: BannerType, assets: "AssetsService", group: bool
+        self, user_id: int, player_id: int, pool: MCBannerType, assets: "AssetsService", group: bool
     ) -> dict:
         """获取抽卡记录分析数据
         :param user_id: 用户id

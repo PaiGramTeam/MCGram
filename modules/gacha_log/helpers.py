@@ -4,6 +4,6 @@ def from_url_get_authkey(url: str) -> str:
     :return: authkey
     """
     try:
-        return url.split("authkey=")[1].split("&")[0]
+        return url.split("record_id=")[1].split("&")[0]
     except IndexError:
         return url
