@@ -5,6 +5,7 @@ from typing import List
 
 __all__ = [
     "roles",
+    "traveler_roles",
     "weapons",
     "idToName",
     "roleToId",
@@ -40,6 +41,7 @@ roles = {
     1604: ["漂泊者·湮灭", "roverhavoc"],
     1605: ["漂泊者·湮灭", "roverhavoc"],
 }
+traveler_roles = [1501, 1502, 1604, 1605]
 not_real_roles = []
 weapons = {
     21010011: ["教学长刃"],
