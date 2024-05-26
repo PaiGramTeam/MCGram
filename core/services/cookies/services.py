@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List
 
 from gram_core.base_service import BaseService
 from gram_core.basemodel import RegionEnum
@@ -10,8 +10,8 @@ from gram_core.services.cookies.services import (
     NeedContinue,
 )
 
-from simnet import GenshinClient, Region, Game
-from simnet.errors import InvalidCookies, TooManyRequests, BadRequest as SimnetBadRequest, NeedChallenge, InvalidDevice
+from kuronet import MCClient, Region
+from kuronet.errors import InvalidCookies, TooManyRequests, BadRequest as SimnetBadRequest
 
 from utils.log import logger
 
@@ -25,45 +25,19 @@ class PublicCookiesService(BaseService, BasePublicCookiesService):
         logger.success("刷新公共Cookies池成功")
 
     async def check_public_cookie(self, region: RegionEnum, cookies: Cookies, public_id: int):  # skipcq: PY-R1000 #
-        device_id: Optional[str] = None
-        device_fp: Optional[str] = None
-        devices = await self.devices_repository.get(cookies.account_id)
-        if devices:
-            device_id = devices.device_id
-            device_fp = devices.device_fp
-
         if region == RegionEnum.HYPERION:
-            client = GenshinClient(
-                cookies=cookies.data, region=Region.CHINESE, device_id=device_id, device_fp=device_fp
-            )
+            client = MCClient(cookies=cookies.data, region=Region.CHINESE, lang="zh-Hans")
         elif region == RegionEnum.HOYOLAB:
-            client = GenshinClient(
-                cookies=cookies.data, region=Region.OVERSEAS, lang="zh-cn", device_id=device_id, device_fp=device_fp
-            )
+            client = MCClient(cookies=cookies.data, region=Region.OVERSEAS, lang="zh-Hans")
         else:
             raise CookieServiceError
         try:
             if client.account_id is None:
                 raise RuntimeError("account_id not found")
-            record_cards = await client.get_record_cards()
-            for record_card in record_cards:
-                if record_card.game == Game.GENSHIN:
-                    await client.get_partial_genshin_user(record_card.uid)
-                    break
-            else:
-                accounts = await client.get_game_accounts()
-                for account in accounts:
-                    if account.game == Game.GENSHIN:
-                        await client.get_partial_genshin_user(account.uid)
-                        break
+            await client.verify_token_v2()
         except InvalidCookies as exc:
-            if exc.ret_code in (10001, -100):
-                logger.warning("用户 [%s] Cookies无效", public_id)
-            elif exc.ret_code == 10103:
-                logger.warning("用户 [%s] Cookies有效，但没有绑定到游戏帐户", public_id)
-            else:
-                logger.warning("Cookies无效 ")
-                logger.exception(exc)
+            logger.warning("Cookies无效 ")
+            logger.exception(exc)
             cookies.status = CookiesStatusEnum.INVALID_COOKIES
             await self._repository.update(cookies)
             await self._cache.delete_public_cookies(cookies.user_id, region)
@@ -72,16 +46,6 @@ class PublicCookiesService(BaseService, BasePublicCookiesService):
             logger.warning("用户 [%s] 查询次数太多或操作频繁", public_id)
             cookies.status = CookiesStatusEnum.TOO_MANY_REQUESTS
             await self._repository.update(cookies)
-            await self._cache.delete_public_cookies(cookies.user_id, region)
-            raise NeedContinue
-        except NeedChallenge:
-            logger.warning("用户 [%s] 触发验证", public_id)
-            await self.set_device_valid(client.account_id, False)
-            await self._cache.delete_public_cookies(cookies.user_id, region)
-            raise NeedContinue
-        except InvalidDevice:
-            logger.warning("用户 [%s] 设备信息无效", public_id)
-            await self.set_device_valid(client.account_id, False)
             await self._cache.delete_public_cookies(cookies.user_id, region)
             raise NeedContinue
         except SimnetBadRequest as exc:
@@ -103,3 +67,26 @@ class PublicCookiesService(BaseService, BasePublicCookiesService):
             raise exc
         finally:
             await client.shutdown()
+
+    async def refresh(self):
+        """刷新公共Cookies 定时任务
+        :return:
+        """
+        user_list: List[int] = []
+        cookies_list = await self._repository.get_all(
+            region=RegionEnum.HYPERION, status=CookiesStatusEnum.STATUS_SUCCESS
+        )
+        for cookies in cookies_list:
+            user_list.append(cookies.user_id)
+        if len(user_list) > 0:
+            add, count = await self._cache.add_public_cookies(user_list, RegionEnum.HYPERION)
+            logger.info("国服公共Cookies池已经添加[%s]个 当前成员数为[%s]", add, count)
+        user_list.clear()
+        cookies_list = await self._repository.get_all(
+            region=RegionEnum.HOYOLAB, status=CookiesStatusEnum.STATUS_SUCCESS
+        )
+        for cookies in cookies_list:
+            user_list.append(cookies.user_id)
+        if len(user_list) > 0:
+            add, count = await self._cache.add_public_cookies(user_list, RegionEnum.HOYOLAB)
+            logger.info("国际服公共Cookies池已经添加[%s]个 当前成员数为[%s]", add, count)

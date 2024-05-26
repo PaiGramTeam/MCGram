@@ -32,7 +32,7 @@ class SetCommandPlugin(Plugin):
             # BotCommand("pay_log_delete", "删除充值记录"),
             # # Cookie 查询类
             BotCommand("sign", "库街区鸣潮每日签到"),
-            # BotCommand("dailynote_tasks", "自动便笺提醒"),
+            BotCommand("daily_note_tasks", "自动便笺提醒"),
             # # 其他
             # BotCommand("hilichurls", "丘丘语字典"),
             # BotCommand("birthday", "查询角色生日"),
