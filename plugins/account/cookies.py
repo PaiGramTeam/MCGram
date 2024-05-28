@@ -231,6 +231,7 @@ class AccountCookiesPlugin(Plugin.Conversation):
         if player:
             if player.account_id != account_id:
                 player.account_id = account_id
+                await self.update_player_info(player, genshin_account.nickname)
                 await self.players_service.update(player)
         else:
             player_model = Player(

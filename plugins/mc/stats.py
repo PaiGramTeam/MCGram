@@ -38,8 +38,7 @@ class PlayerStatsPlugins(Plugin):
                 uid = int(args[0])
             async with self.helper.genshin_or_public(user_id) as client:
                 client: "MCClient"
-                if not client.public:
-                    await client.refresh_data()
+                await client.refresh_data(client.player_id)
                 render_result = await self.render(client, uid)
         except TooManyRequestPublicCookies:
             await message.reply_text("用户查询次数过多 请稍后重试")
