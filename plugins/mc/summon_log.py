@@ -63,7 +63,6 @@ class WishLogPlugin(Plugin.Conversation):
     IMPORT_HINT = (
         "<b>开始导入祈愿历史记录：请获取抽卡记录链接后发送给我</b>\n\n"
         f"> 你还可以向凌阳发送从其他工具导出的 UIMF {UIMF_VERSION} 标准的记录文件\n"
-        "> 你还可以在游戏内访问全部抽卡记录（注意必须是全部）后选择自动导入\n"
         "<b>注意：导入的数据将会与旧数据进行合并。</b>"
     )
 
@@ -174,7 +173,7 @@ class WishLogPlugin(Plugin.Conversation):
         message = update.effective_message
         user = update.effective_user
         logger.info("用户 %s[%s] 导入唤取记录命令请求", user.full_name, user.id)
-        keyboard = ReplyKeyboardMarkup([["自动导入"], ["退出"]], one_time_keyboard=True)
+        keyboard = ReplyKeyboardMarkup([["退出"]], one_time_keyboard=True)
         await message.reply_text(self.IMPORT_HINT, parse_mode="html", reply_markup=keyboard)
         return INPUT_URL
 
@@ -189,9 +188,7 @@ class WishLogPlugin(Plugin.Conversation):
         if not message.text:
             await message.reply_text("请发送文件或链接")
             return INPUT_URL
-        if message.text == "自动导入":
-            authkey = BASE_AUTHKEY
-        elif message.text == "退出":
+        if message.text == "退出":
             await message.reply_text("取消导入抽卡记录", reply_markup=ReplyKeyboardRemove())
             return ConversationHandler.END
         else:
