@@ -63,6 +63,8 @@ class PlayersManagesPlugin(Plugin):
         buttons = []
         for player in players:
             player_info = await self.player_info_service.get(player)
+            if not player_info:
+                continue
             text = f"{player.player_id} {player_info.nickname}"
             buttons.append(
                 [
@@ -72,6 +74,12 @@ class PlayersManagesPlugin(Plugin):
                     )
                 ]
             )
+        if not buttons:
+            if callback_query:
+                await callback_query.edit_message_text("未查询到您所绑定的账号信息，请先绑定账号")
+            else:
+                await message.reply_text("未查询到您所绑定的账号信息，请先绑定账号")
+            return
         if callback_query:
             await callback_query.edit_message_text(
                 "从下面的列表中选择一个玩家", reply_markup=InlineKeyboardMarkup(buttons)
