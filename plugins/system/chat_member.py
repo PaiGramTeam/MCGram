@@ -80,7 +80,7 @@ class ChatMember(Plugin):
             quit_status = True
         if quit_status:
             try:
-                await context.bot.send_message(chat.id, "凌阳不想进去！不是旅行者的邀请！")
+                await context.bot.send_message(chat.id, "凌阳不想进去！不是漂泊者的邀请！")
             except Forbidden as exc:
                 logger.info("发送消息失败 %s", exc.message)
             except NetworkError as exc:
