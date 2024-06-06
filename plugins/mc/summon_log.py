@@ -55,6 +55,8 @@ if TYPE_CHECKING:
 
 INPUT_URL, INPUT_FILE, CONFIRM_DELETE = range(10100, 10103)
 BASE_AUTHKEY = "1"
+WAITING = f"小{config.notice.bot_name}正在从服务器获取数据，请稍后"
+WISHLOG_NOT_FOUND = f"{config.notice.bot_name}没有找到你的抽卡记录，快来私聊{config.notice.bot_name}导入吧~"
 
 
 class WishLogPlugin(Plugin.Conversation):
@@ -107,7 +109,7 @@ class WishLogPlugin(Plugin.Conversation):
                 new_num = await self.gacha_log.import_gacha_log_data(user.id, player_id, data, verify_uid)
                 return "更新完成，本次没有新增数据" if new_num == 0 else f"更新完成，本次共新增{new_num}条唤取记录"
         except GachaLogNotFound:
-            return "凌阳没有找到你的唤取记录，快来私聊凌阳导入吧~"
+            return WISHLOG_NOT_FOUND
         except GachaLogAccountNotFound:
             return "导入失败，可能文件包含的唤取记录所属 uid 与你当前绑定的 uid 不同"
         except GachaLogFileError:
@@ -122,7 +124,7 @@ class WishLogPlugin(Plugin.Conversation):
             return "导入失败，你已经通过其他方式导入过唤取记录了，本次无法导入"
         except PlayerNotFoundError:
             logger.info("未查询到用户 %s[%s] 所绑定的账号信息", user.full_name, user.id)
-            return "凌阳没有找到您所绑定的账号信息，请先私聊凌阳绑定账号"
+            return config.notice.user_not_found
 
     async def import_from_file(self, user: User, message: Message, document: Document = None) -> None:
         if not document:
@@ -193,7 +195,7 @@ class WishLogPlugin(Plugin.Conversation):
             return ConversationHandler.END
         else:
             authkey = from_url_get_authkey(message.text)
-        reply = await message.reply_text("小凌阳正在从服务器获取数据，请稍后", reply_markup=ReplyKeyboardRemove())
+        reply = await message.reply_text(WAITING, reply_markup=ReplyKeyboardRemove())
         await message.reply_chat_action(ChatAction.TYPING)
         text = await self._refresh_user_data(user, authkey=authkey)
         try:
@@ -215,7 +217,7 @@ class WishLogPlugin(Plugin.Conversation):
             context.chat_data["uid"] = player_id
         except PlayerNotFoundError:
             logger.info("未查询到用户 %s[%s] 所绑定的账号信息", user.full_name, user.id)
-            await message.reply_text("未查询到您所绑定的账号信息，请先绑定账号")
+            await message.reply_text(config.notice.user_not_found)
             return ConversationHandler.END
         _, status = await self.gacha_log.load_history_info(str(user.id), str(player_id), only_status=True)
         if not status:
@@ -285,7 +287,7 @@ class WishLogPlugin(Plugin.Conversation):
                 ]
             ]
             await message.reply_text(
-                "凌阳没有找到你的唤取记录，快来私聊凌阳导入吧~", reply_markup=InlineKeyboardMarkup(buttons)
+                WISHLOG_NOT_FOUND, reply_markup=InlineKeyboardMarkup(buttons)
             )
         except GachaLogAccountNotFound:
             await message.reply_text("导入失败，可能文件包含的唤取记录所属 uid 与你当前绑定的 uid 不同")
@@ -293,7 +295,7 @@ class WishLogPlugin(Plugin.Conversation):
             await message.reply_text("导入失败，数据格式错误")
         except PlayerNotFoundError:
             logger.info("未查询到用户 %s[%s] 所绑定的账号信息", user.full_name, user.id)
-            await message.reply_text("未查询到您所绑定的账号信息，请先绑定账号")
+            await message.reply_text(config.notice.user_not_found)
 
     async def rander_wish_log_analysis(
         self, user_id: int, player_id: int, pool_type: MCBannerType
@@ -404,7 +406,7 @@ class WishLogPlugin(Plugin.Conversation):
                 ]
             ]
             await message.reply_text(
-                "凌阳没有找到你此卡池的唤取记录，快来点击按钮私聊凌阳导入吧~",
+                WISHLOG_NOT_FOUND,
                 reply_markup=InlineKeyboardMarkup(buttons),
             )
 

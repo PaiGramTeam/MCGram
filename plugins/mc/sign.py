@@ -3,6 +3,7 @@ from telegram.constants import ChatAction
 from telegram.ext import CallbackContext
 from telegram.ext import filters
 
+from core.config import config
 from core.plugin import Plugin, handler
 from core.services.task.models import Task as SignUser, TaskStatusEnum
 from core.services.task.services import SignServices
@@ -33,7 +34,7 @@ class Sign(Plugin):
         try:
             await self.genshin_helper.get_genshin_client(user_id)
         except (PlayerNotFoundError, CookiesNotFoundError):
-            return "未查询到账号信息，请先私聊彦卿绑定账号"
+            return config.notice.user_not_found
         user: SignUser = await self.sign_service.get_by_user_id(user_id)
         if user:
             if method == "关闭":
