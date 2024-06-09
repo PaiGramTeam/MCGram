@@ -310,7 +310,9 @@ class GachaLog:
         return new_num
 
     @staticmethod
-    def check_avatar_up(_: str, __: datetime.datetime) -> bool:
+    def check_avatar_up(name: str, __: datetime.datetime) -> bool:
+        if name in {"维里奈", "安可", "卡卡罗", "凌阳", "鉴心"}:
+            return False
         return True
 
     async def get_all_5_star_items(self, data: List[GachaItem], assets: "AssetsService", pool_name: str = "角色祈愿"):
