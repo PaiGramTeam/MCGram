@@ -1,7 +1,10 @@
+from datetime import datetime
 from io import BytesIO
 from typing import Optional, TYPE_CHECKING, List, Union, Tuple, Dict
 
+from kuronet import Game, Region
 from kuronet.models.mc.wish import MCBannerType
+from kuronet.utils.player import recognize_region
 from telegram import (
     Document,
     InlineKeyboardButton,
@@ -21,9 +24,12 @@ from core.dependence.assets import AssetsService
 from core.plugin import Plugin, conversation, handler
 from core.services.cookies import CookiesService
 from core.services.players import PlayersService
+from core.services.players.services import PlayerInfoService
 from core.services.template.models import FileType
 from core.services.template.services import TemplateService
+from gram_core.basemodel import RegionEnum
 from gram_core.config import config
+from core.services.players.models import PlayersDataBase as Player, PlayerInfoSQLModel
 from modules.gacha_log.const import UIMF_VERSION, GACHA_TYPE_LIST_REVERSE
 from modules.gacha_log.error import (
     GachaLogAccountNotFound,
@@ -33,7 +39,7 @@ from modules.gacha_log.error import (
     GachaLogMixedProvider,
     GachaLogNotFound,
 )
-from modules.gacha_log.helpers import from_url_get_authkey
+from modules.gacha_log.helpers import from_url_get_authkey, from_url_get_player_id
 from modules.gacha_log.log import GachaLog
 from modules.gacha_log.migrate import GachaLogMigrate
 from modules.gacha_log.models import GachaLogInfo
@@ -50,11 +56,9 @@ except ImportError:
 if TYPE_CHECKING:
     from telegram import Update, Message, User, Document
     from telegram.ext import ContextTypes
-    from gram_core.services.players.models import Player
     from gram_core.services.template.models import RenderResult
 
 INPUT_URL, INPUT_FILE, CONFIRM_DELETE = range(10100, 10103)
-BASE_AUTHKEY = "1"
 WAITING = f"小{config.notice.bot_name}正在从服务器获取数据，请稍后"
 WISHLOG_NOT_FOUND = f"{config.notice.bot_name}没有找到你的抽卡记录，快来私聊{config.notice.bot_name}导入吧~"
 
@@ -63,7 +67,7 @@ class WishLogPlugin(Plugin.Conversation):
     """唤取记录导入/导出/分析"""
 
     IMPORT_HINT = (
-        "<b>开始导入祈愿历史记录：请获取抽卡记录链接后发送给我</b>\n\n"
+        "<b>开始导入唤取历史记录：请获取抽卡记录链接后发送给我</b>\n\n"
         f"> 你还可以向凌阳发送从其他工具导出的 UIMF {UIMF_VERSION} 标准的记录文件\n"
         "<b>注意：导入的数据将会与旧数据进行合并。</b>"
     )
@@ -74,9 +78,11 @@ class WishLogPlugin(Plugin.Conversation):
         players_service: PlayersService,
         assets: AssetsService,
         cookie_service: CookiesService,
+        player_info_service: PlayerInfoService = None,
     ):
         self.template_service = template_service
         self.players_service = players_service
+        self.player_info_service = player_info_service
         self.assets_service = assets
         self.cookie_service = cookie_service
         self.gacha_log = GachaLog()
@@ -90,8 +96,48 @@ class WishLogPlugin(Plugin.Conversation):
             raise PlayerNotFoundError(uid)
         return player.player_id
 
+    @staticmethod
+    def get_game_region(player_id: int) -> RegionEnum:
+        if recognize_region(player_id, Game.MC) == Region.OVERSEAS:
+            return RegionEnum.HOYOLAB
+        return RegionEnum.HYPERION
+
+    async def update_player_info(self, player: "Player", nickname: str):
+        player_info = await self.player_info_service.get(player)
+        if player_info is None:
+            player_info = PlayerInfoSQLModel(
+                user_id=player.user_id,
+                player_id=player.player_id,
+                nickname=nickname,
+                create_time=datetime.now(),
+                is_update=True,
+            )  # 不添加更新时间
+            await self.player_info_service.add(player_info)
+
+    async def add_player(self, user_id: int, player_id: int):
+        region = self.get_game_region(player_id)
+        player_info = await self.players_service.get_player(user_id)  # 寻找主账号
+        is_chosen = True
+        if player_info is not None and player_info.is_chosen:
+            is_chosen = False
+        if player_info is not None and player_info.player_id == player_id:
+            return
+        player = Player(
+            user_id=user_id,
+            player_id=player_id,
+            region=region,
+            is_chosen=is_chosen,  # todo 多账号
+        )
+        await self.players_service.add(player)
+        await self.update_player_info(player, "unknown")
+
     async def _refresh_user_data(
-        self, user: User, data: dict = None, authkey: str = None, verify_uid: bool = True
+        self,
+        user: User,
+        data: dict = None,
+        authkey: str = None,
+        verify_uid: bool = True,
+        player_id: int = 0,
     ) -> str:
         """刷新用户数据
         :param user: 用户
@@ -101,12 +147,23 @@ class WishLogPlugin(Plugin.Conversation):
         """
         try:
             logger.debug("尝试获取已绑定的鸣潮账号")
-            player_id = await self.get_player_id(user.id)
+            need_add_user = False
+            _player_id = 0
+            try:
+                _player_id = await self.get_player_id(user.id)
+            except PlayerNotFoundError as e:
+                if player_id:
+                    _player_id = player_id
+                    need_add_user = True
+                if not _player_id:
+                    raise e
             if authkey:
-                new_num = await self.gacha_log.get_gacha_log_data(user.id, player_id, authkey)
+                new_num = await self.gacha_log.get_gacha_log_data(user.id, _player_id, authkey)
+                if need_add_user:
+                    await self.add_player(user.id, player_id)
                 return "更新完成，本次没有新增数据" if new_num == 0 else f"更新完成，本次共新增{new_num}条唤取记录"
             if data:
-                new_num = await self.gacha_log.import_gacha_log_data(user.id, player_id, data, verify_uid)
+                new_num = await self.gacha_log.import_gacha_log_data(user.id, _player_id, data, verify_uid)
                 return "更新完成，本次没有新增数据" if new_num == 0 else f"更新完成，本次共新增{new_num}条唤取记录"
         except GachaLogNotFound:
             return WISHLOG_NOT_FOUND
@@ -115,9 +172,7 @@ class WishLogPlugin(Plugin.Conversation):
         except GachaLogFileError:
             return "导入失败，数据格式错误"
         except GachaLogInvalidAuthkey:
-            if authkey == BASE_AUTHKEY:
-                return "导入失败，你还没有在游戏内访问全部抽卡记录"
-            return "更新数据失败，recordId 无效"
+            return "更新数据失败，record Id 和 player id 不匹配"
         except GachaLogAuthkeyTimeout:
             return "更新数据失败，recordId 已经过期"
         except GachaLogMixedProvider:
@@ -195,9 +250,10 @@ class WishLogPlugin(Plugin.Conversation):
             return ConversationHandler.END
         else:
             authkey = from_url_get_authkey(message.text)
+            player_id = from_url_get_player_id(message.text)
         reply = await message.reply_text(WAITING, reply_markup=ReplyKeyboardRemove())
         await message.reply_chat_action(ChatAction.TYPING)
-        text = await self._refresh_user_data(user, authkey=authkey)
+        text = await self._refresh_user_data(user, authkey=authkey, player_id=player_id)
         try:
             await reply.delete()
         except BadRequest:

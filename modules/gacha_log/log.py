@@ -8,9 +8,10 @@ from pathlib import Path
 from typing import Dict, IO, List, Optional, Tuple, Union, TYPE_CHECKING
 
 import aiofiles
-from kuronet import MCClient, Region
+from kuronet import MCClient, Game
 from kuronet.errors import AuthkeyTimeout, InvalidAuthkey
 from kuronet.models.mc.wish import MCBannerType
+from kuronet.utils.player import recognize_region
 from openpyxl import load_workbook
 
 from metadata.pool.pool import get_pool_by_id
@@ -251,7 +252,7 @@ class GachaLog:
 
     @staticmethod
     def get_game_client(player_id: int) -> MCClient:
-        return MCClient(player_id=player_id, region=Region.CHINESE, lang="zh-cn")
+        return MCClient(player_id=player_id, region=recognize_region(player_id, Game.MC), lang="zh-hans")
 
     async def get_gacha_log_data(self, user_id: int, player_id: int, authkey: str) -> int:
         """使用authkey获取抽卡记录数据，并合并旧数据
