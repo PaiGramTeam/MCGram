@@ -196,9 +196,7 @@ class AvatarListPlugin(Plugin):
         self.add_delete_message_job(notice, delay=5)
 
         for group in ArkoWrapper(images).group(10):  # 每 10 张图片分一个组
-            await RenderGroupResult(results=group).reply_media_group(
-                message, allow_sending_without_reply=True, write_timeout=60
-            )
+            await RenderGroupResult(results=group).reply_media_group(message, write_timeout=60)
 
         self.log_user(
             update,

@@ -83,6 +83,6 @@ class Sign(Plugin):
         client = await self.genshin_helper.get_genshin_client(user_id)
         await message.reply_chat_action(ChatAction.TYPING)
         sign_text = await self.sign_system.start_sign(client)
-        reply_message = await message.reply_text(sign_text, allow_sending_without_reply=True)
+        reply_message = await message.reply_text(sign_text)
         if filters.ChatType.GROUPS.filter(reply_message):
             self.add_delete_message_job(reply_message)
