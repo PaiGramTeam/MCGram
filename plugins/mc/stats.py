@@ -27,16 +27,13 @@ class PlayerStatsPlugins(Plugin):
 
     @handler.command("stats", player=True, block=False)
     @handler.message(filters.Regex("^玩家统计查询(.*)"), player=True, block=False)
-    async def command_start(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> Optional[int]:
+    async def command_start(self, update: "Update", _: "ContextTypes.DEFAULT_TYPE") -> Optional[int]:
         user_id = await self.get_real_user_id(update)
         message = update.effective_message
+        uid, offset = self.get_real_uid_or_offset(update)
         self.log_user(update, logger.info, "查询游戏用户命令请求")
-        uid: Optional[int] = None
         try:
-            args = context.args
-            if args is not None and len(args) == 9:
-                uid = int(args[0])
-            async with self.helper.genshin_or_public(user_id) as client:
+            async with self.helper.genshin_or_public(user_id, player_id=uid, offset=offset) as client:
                 client: "MCClient"
                 await client.refresh_data(client.player_id)
                 render_result = await self.render(client, uid)

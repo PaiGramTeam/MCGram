@@ -219,8 +219,10 @@ class GenshinHelper(Plugin):
             raise ServiceNotFoundError(*filter(lambda x: x is None, temp))
 
     @asynccontextmanager
-    async def genshin(self, user_id: int, region: Optional[RegionEnum] = None) -> MCClient:  # skipcq: PY-R1000 #
-        player = await self.players_service.get_player(user_id, region)
+    async def genshin(  # skipcq: PY-R1000 #
+        self, user_id: int, region: Optional[RegionEnum] = None, player_id: int = None, offset: int = 0
+    ) -> MCClient:
+        player = await self.players_service.get_player(user_id, region, player_id, offset)
         if player is None:
             raise PlayerNotFoundError(user_id)
 
@@ -260,8 +262,10 @@ class GenshinHelper(Plugin):
                     logger.error("用户 user_id[%s] 更新 Cookies 失败", cookie_model.user_id, exc_info=_exc)
                 raise exc
 
-    async def get_genshin_client(self, user_id: int, region: Optional[RegionEnum] = None) -> MCClient:
-        player = await self.players_service.get_player(user_id, region)
+    async def get_genshin_client(
+        self, user_id: int, region: Optional[RegionEnum] = None, player_id: int = None, offset: int = 0
+    ) -> MCClient:
+        player = await self.players_service.get_player(user_id, region, player_id, offset)
         if player is None:
             raise PlayerNotFoundError(user_id)
 
@@ -316,17 +320,23 @@ class GenshinHelper(Plugin):
 
     @asynccontextmanager
     async def genshin_or_public(
-        self, user_id: int, region: Optional[RegionEnum] = None, uid: Optional[int] = None
+        self,
+        user_id: int,
+        region: Optional[RegionEnum] = None,
+        uid: Optional[int] = None,
+        offset: int = 0,
     ) -> MCClient:
         try:
-            async with self.genshin(user_id, region) as client:
+            async with self.genshin(user_id, region, uid, offset) as client:
                 client.public = False
                 if uid and recognize_server(uid, client.game) != recognize_server(client.player_id, client.game):
                     # 如果 uid 和 player_id 服务器不一致，说明是跨服的，需要使用公共的 cookies
                     raise CookiesNotFoundError(user_id)
                 yield client
-        except CookiesNotFoundError:
+        except (CookiesNotFoundError, PlayerNotFoundError):
             if uid:
+                if uid < 10:
+                    raise PlayerNotFoundError(user_id)
                 region = RegionEnum.HYPERION if uid < 600000000 else RegionEnum.HOYOLAB
             async with self.public_genshin(user_id, region, uid) as client:
                 client.public = True
