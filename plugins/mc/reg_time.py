@@ -62,6 +62,6 @@ class RegTimePlugin(Plugin):
         uid, offset = self.get_real_uid_or_offset(update)
         message = update.effective_message
         self.log_user(update, logger.info, "鸣潮注册时间命令请求")
-        async with self.helper.genshin_or_public(user_id, player_id=uid, offset=offset) as client:
+        async with self.helper.genshin_or_public(user_id, uid=uid, offset=offset) as client:
             reg_time = await self.get_reg_time_from_cache(client)
         await message.reply_text(f"你的鸣潮账号注册时间为：{reg_time}")

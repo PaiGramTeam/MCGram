@@ -33,7 +33,7 @@ class PlayerStatsPlugins(Plugin):
         uid, offset = self.get_real_uid_or_offset(update)
         self.log_user(update, logger.info, "查询游戏用户命令请求")
         try:
-            async with self.helper.genshin_or_public(user_id, player_id=uid, offset=offset) as client:
+            async with self.helper.genshin_or_public(user_id, uid=uid, offset=offset) as client:
                 client: "MCClient"
                 await client.refresh_data(client.player_id)
                 render_result = await self.render(client, uid)

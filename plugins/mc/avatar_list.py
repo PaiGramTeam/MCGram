@@ -164,7 +164,7 @@ class AvatarListPlugin(Plugin):
         self.log_user(update, logger.info, "[bold]练度统计[/bold]: all=%s", all_avatars, extra={"markup": True})
         notice = None
         try:
-            async with self.helper.genshin_or_public(user_id, player_id=uid, offset=offset) as client:
+            async with self.helper.genshin_or_public(user_id, uid=uid, offset=offset) as client:
                 client: "MCClient"
                 notice = await message.reply_text("凌阳需要收集整理数据，还请耐心等待哦~")
                 await message.reply_chat_action(ChatAction.TYPING)
