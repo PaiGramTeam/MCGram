@@ -1,3 +1,4 @@
+import re
 from io import BytesIO
 from typing import Any, List, Optional
 
@@ -52,6 +53,9 @@ class ArtworkImage(BaseModel):
             return data
 
 
+PATTERN = re.compile(r"关注(.*?)，获取更多(.*?)")
+
+
 class PostInfo(BaseModel):
     _data: dict = PrivateAttr()
     post_id: int
@@ -77,7 +81,7 @@ class PostInfo(BaseModel):
         for image in post_content:
             content_type = image.get("contentType")
             if content_type == 1:
-                if image.get("content") == "关注库街区《鸣潮》官方账号，获取更多《鸣潮》资讯。":
+                if image.get("content") and PATTERN.match(image.get("content")):
                     skip_focus = True
             elif content_type == 2:
                 if skip_focus:

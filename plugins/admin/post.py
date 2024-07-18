@@ -23,6 +23,7 @@ from telegram.helpers import escape_markdown
 
 from core.config import config
 from core.plugin import Plugin, conversation, handler
+from gram_core.basemodel import Settings
 from modules.apihelper.client.components.mcbbs import MCBBS
 from modules.apihelper.error import APIHelperException
 from modules.apihelper.models.genshin.hyperion import ArtworkImage
@@ -44,8 +45,22 @@ class PostHandlerData:
         self.tags: Optional[List[str]] = []
 
 
+class PostConfig(Settings):
+    """文章推送配置"""
+
+    chat_id: Optional[int] = 0
+
+    class Config(Settings.Config):
+        env_prefix = "post_"
+
+
+def escape_html(text: str) -> str:
+    return text.replace("<", "《").replace(">", "》")
+
+
 CHECK_POST, SEND_POST, CHECK_COMMAND, GTE_DELETE_PHOTO = range(10900, 10904)
 GET_POST_CHANNEL, GET_TAGS, GET_TEXT, GET_VIDEO = range(10904, 10908)
+post_config = PostConfig()
 
 
 class Post(Plugin.Conversation):
@@ -113,6 +128,7 @@ class Post(Plugin.Conversation):
             return
 
         self.last_post_id_list = temp_post_id_list
+        chat_id = post_config.chat_id or config.owner
 
         for post_id in new_post_id_list:
             try:
@@ -121,7 +137,7 @@ class Post(Plugin.Conversation):
                 logger.error("获取文章信息失败 %s", str(exc))
                 text = f"获取 post_id[{post_id}] 文章信息失败 {str(exc)}"
                 try:
-                    await context.bot.send_message(config.owner, text)
+                    await context.bot.send_message(chat_id, text)
                 except BadRequest as _exc:
                     logger.error("发送消息失败 %s", _exc.message)
                 continue
@@ -132,10 +148,10 @@ class Post(Plugin.Conversation):
                 ]
             ]
             url = f"https://www.kurobbs.com/{self.short_name}/post/{post_info.post_id}"
-            text = f"发现官网推荐文章 <a href='{url}'>{post_info.subject}</a>\n是否开始处理"
+            text = f"发现官网推荐文章 <a href='{url}'>{escape_html(post_info.subject)}</a>\n是否开始处理"
             try:
                 await context.bot.send_message(
-                    config.owner, text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons)
+                    chat_id, text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons)
                 )
             except BadRequest as exc:
                 logger.error("发送消息失败 %s", exc.message)
@@ -159,17 +175,20 @@ class Post(Plugin.Conversation):
         too_long = False
         if post_p := soup.find_all("p"):
             try:
-                for p in post_p:
-                    t = p.get_text()
+                for p in soup.children:
+                    t = p.get_text().strip()
                     if not t and start:
                         continue
                     start = False
-                    for tag in p.contents:
-                        post_text_ = post_text + parse_tag(tag)
-                        if len(post_text_) >= (MessageLimit.CAPTION_LENGTH - 55):
-                            raise RecursionError
-                        post_text = post_text_
-                    post_text += "\n"
+                    try:
+                        for tag in p.contents:
+                            post_text_ = post_text + parse_tag(tag).strip()
+                            if len(post_text_) >= (MessageLimit.CAPTION_LENGTH - 55):
+                                raise RecursionError
+                            post_text = post_text_
+                        post_text += "\n"
+                    except AttributeError:
+                        pass
             except RecursionError:
                 too_long = True
         else:
@@ -292,7 +311,7 @@ class Post(Plugin.Conversation):
         return ConversationHandler.END
 
     @conversation.entry_point
-    @handler.command(command="post", filters=filters.ChatType.PRIVATE, block=False, admin=True)
+    @handler.command(command="post", block=False, admin=True)
     async def command_start(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
         user = update.effective_user
         message = update.effective_message

@@ -91,7 +91,7 @@ class MCBBS:
         return {"x-oss-process": params}
 
     async def get_official_recommended_posts(self, game_id: int) -> JSON_DATA:
-        data = {"forumId": "9", "gameId": str(game_id), "pageSize": "5", "pageNo": "1", "eventType": ""}
+        data = {"forumId": "9", "gameId": str(game_id), "pageSize": "10", "pageNo": "1", "eventType": ""}
         response = await self.client.post(url=self.GET_OFFICIAL_RECOMMENDED_POSTS_URL, data=data)
         return response
 
