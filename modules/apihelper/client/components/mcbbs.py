@@ -124,8 +124,9 @@ class MCBBS:
 
     async def download_image(self, art_id: int, url: str, page: int = 0) -> List[ArtworkImage]:
         filename = os.path.basename(url)
-        _, file_extension = os.path.splitext(filename)
-        is_image = bool(file_extension in ".jpg" or file_extension in ".png")
+        _, _file_extension = os.path.splitext(filename)
+        file_extension = _file_extension.lower()
+        is_image = file_extension in ".jpg" or file_extension in ".jpeg" or file_extension in ".png"
         response = await self.client.get(
             url, params=self.get_images_params(resize=2000) if is_image else None, de_json=False
         )

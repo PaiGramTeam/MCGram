@@ -90,7 +90,7 @@ class PostInfo(BaseModel):
                 image_url = image.get("url")
                 if image_url:
                     image_urls2.append(image_url)
-        image_urls = image_urls2 if image_urls2 else image_urls1
+        image_urls = image_urls2 or image_urls1
         created_at = post.get("postTime", "")
         return PostInfo(
             _data=data,
