@@ -131,7 +131,12 @@ class Hyperion:
             url, params=self.get_images_params(resize=2000) if is_image else None, de_json=False
         )
         return ArtworkImage.gen(
-            art_id=art_id, page=page, file_name=filename, file_extension=url.split(".")[-1], data=response.content
+            art_id=art_id,
+            page=page,
+            file_name=filename,
+            file_extension=url.split(".")[-1],
+            data=response.content,
+            url=url,
         )
 
     async def get_new_list(self, gids: int, type_id: int, page_size: int = 20):

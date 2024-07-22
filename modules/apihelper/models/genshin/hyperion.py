@@ -15,6 +15,7 @@ class ArtworkImage(BaseModel):
     file_name: Optional[str] = None
     file_extension: Optional[str] = None
     is_error: bool = False
+    url: str = ""
 
     @property
     def format(self) -> Optional[str]:
