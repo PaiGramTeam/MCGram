@@ -72,7 +72,7 @@ class PlayerStatsPlugins(Plugin):
                 ("小型信标", "smallCount"),
                 ("中型信标", "bigCount"),
             ],
-            "area": explor.areaInfoList,
+            "area": explor.exploreList[0].areaInfoList,
             "style": "huanglong",  # nosec
         }
 
