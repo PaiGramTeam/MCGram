@@ -74,15 +74,15 @@ venv\Scripts\activate.bat
 **Install Dependencies:**
 
 ```bash
-pip install poetry
-poetry install --extras all
+pip install uv
+uv sync
 playwright install chromium
 ```
 
 Optional Dependencies
 
 ```bash
-poetry install --extras all
+uv sync --all-extras
 ```
 
 **Edit Config:**
