@@ -1,12 +1,12 @@
-import simnet
+import kuronet
 from httpx import AsyncClient, Timeout, Limits
 
 from core.config import config
 from utils.patch.methods import patch, patchable
 
 
-@patch(simnet.GenshinClient)
-class GenshinClient:
+@patch(kuronet.MCClient)
+class MCClient:
     @patchable
     def __init__(self, *args, **kwargs):
         self.old___init__(*args, **kwargs)

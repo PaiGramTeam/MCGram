@@ -2,7 +2,8 @@ import datetime
 from typing import Dict, List
 
 from pytz import timezone
-from simnet.models.genshin.chronicle.abyss import SpiralAbyss
+
+# from simnet.models.genshin.chronicle.abyss import SpiralAbyss
 
 from core.services.history_data.models import HistoryData, HistoryDataTypeEnum, HistoryDataAbyss
 from gram_core.base_service import BaseService
@@ -36,7 +37,7 @@ class HistoryDataAbyssServices(BaseService, HistoryDataBaseServices):
         return any(d.data == data.data for d in old_data)
 
     @staticmethod
-    def create(user_id: int, abyss_data: SpiralAbyss, character_data: Dict[int, int]):
+    def create(user_id: int, abyss_data: "SpiralAbyss", character_data: Dict[int, int]):
         data = HistoryDataAbyss(abyss_data=abyss_data, character_data=character_data)
         json_data = data.json(by_alias=True, encoder=json_encoder)
         return HistoryData(

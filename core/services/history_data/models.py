@@ -2,7 +2,8 @@ import enum
 from typing import Dict
 
 from pydantic import BaseModel
-from simnet.models.genshin.chronicle.abyss import SpiralAbyss
+
+# from simnet.models.genshin.chronicle.abyss import SpiralAbyss
 
 from gram_core.services.history_data.models import HistoryData
 
@@ -18,7 +19,7 @@ class HistoryDataTypeEnum(int, enum.Enum):
 
 
 class HistoryDataAbyss(BaseModel):
-    abyss_data: SpiralAbyss
+    abyss_data: "SpiralAbyss"
     character_data: Dict[int, int]
 
     @classmethod
