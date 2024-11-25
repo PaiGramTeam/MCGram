@@ -78,12 +78,13 @@ class AvatarListPlugin(Plugin):
         self.player_service = player_service
         self.player_info_service = player_info_service
         self.player_info_system = player_info_system
+        self.show_talents = ["常态攻击", "共鸣技能", "共鸣解放", "变奏技能", "共鸣回路"]
 
     async def get_avatar_data(self, character: MCRole, client: "MCClient") -> Optional["AvatarData"]:
         detail = await self.character_details.get_character_details(client, character)
         if detail is None:
             return None
-        talents = [t for t in detail.skillList if t.skill.type in ["常态攻击", "共鸣技能", "共鸣解放"]]
+        talents = [t for t in detail.skillList if t.skill.type in self.show_talents]
         return AvatarData(
             avatar=character,
             detail=detail,
@@ -92,7 +93,7 @@ class AvatarListPlugin(Plugin):
             weapon_icon=(self.assets_service.weapon.icon(detail.weaponData.weapon.weaponId)).as_uri(),
             skills=[
                 SkillData(skill=s, buffed=False)
-                for s in sorted(talents, key=lambda x: ["常态攻击", "共鸣技能", "共鸣解放"].index(x.skill.type))
+                for s in sorted(talents, key=lambda x: self.show_talents.index(x.skill.type))
             ],
             constellation=len([i for i in detail.chainList if i.unlocked]),
         )
