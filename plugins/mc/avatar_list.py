@@ -45,7 +45,7 @@ class AvatarData(BaseModel):
     detail: MCRoleDetail
     icon: str
     weapon: MCRoleWeaponData
-    weapon_icon: Optional[str]
+    weapon_icon: Optional[str] = None
     skills: List[SkillData]
     constellation: int
 
