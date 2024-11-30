@@ -24,7 +24,7 @@ from telegram.helpers import escape_markdown
 
 from core.config import config
 from core.plugin import Plugin, conversation, handler
-from gram_core.basemodel import Settings
+from gram_core.basemodel import Settings, SettingsConfigDict
 from modules.apihelper.client.components.mcbbs import MCBBS
 from modules.apihelper.error import APIHelperException
 from modules.apihelper.models.genshin.hyperion import ArtworkImage
@@ -51,8 +51,7 @@ class PostConfig(Settings):
 
     chat_id: Optional[int] = 0
 
-    class Config(Settings.Config):
-        env_prefix = "post_"
+    model_config = SettingsConfigDict(env_prefix="post_")
 
 
 def escape_html(text: str) -> str:
