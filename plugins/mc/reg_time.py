@@ -1,4 +1,4 @@
-import pytz
+import zoneinfo
 
 from typing import TYPE_CHECKING
 
@@ -22,7 +22,7 @@ try:
 except ImportError:
     import json as jsonlib
 
-shanghai_tz = pytz.timezone("Asia/Shanghai")
+shanghai_tz = zoneinfo.ZoneInfo("Asia/Shanghai")
 
 
 class RegTimePlugin(Plugin):
