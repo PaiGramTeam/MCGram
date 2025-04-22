@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Dict, Optional
 
+from httpx import LocalProtocolError
 from kuronet import MCClient, Region
-from kuronet.errors import BadRequest as SimnetBadRequest
+from kuronet.errors import BadRequest as SimnetBadRequest, NetworkError
 from kuronet.models.lab.role import Account
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, TelegramObject, Update
 from telegram.ext import CallbackContext, ConversationHandler, filters
@@ -180,7 +181,9 @@ class AccountCookiesPlugin(Plugin.Conversation):
                 )
                 await message.reply_text("user_token 无效，请重新绑定。", reply_markup=ReplyKeyboardRemove())
                 return ConversationHandler.END
-            except UnicodeEncodeError:
+            except (UnicodeEncodeError, NetworkError) as e:
+                if isinstance(e, NetworkError) and not isinstance(e.__cause__, LocalProtocolError):
+                    raise e
                 await message.reply_text("user_token 非法，请重新绑定。", reply_markup=ReplyKeyboardRemove())
                 return ConversationHandler.END
         if account_cookies_plugin_data.account_id is None:
