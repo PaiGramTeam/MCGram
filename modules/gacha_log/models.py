@@ -60,6 +60,8 @@ class GachaItem(BaseModel):
     @field_validator("item_type")
     @classmethod
     def check_item_type(cls, item):
+        if item == "道具":
+            item = "武器"
         if item not in {"角色", "武器"}:
             raise ValueError(f"error item type {item}")
         return item
