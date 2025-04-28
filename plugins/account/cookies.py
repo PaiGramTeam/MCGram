@@ -1,12 +1,12 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 
 from httpx import LocalProtocolError
 from kuronet import MCClient, Region
 from kuronet.errors import BadRequest as SimnetBadRequest, NetworkError
 from kuronet.models.lab.role import Account
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, TelegramObject, Update
-from telegram.ext import CallbackContext, ConversationHandler, filters
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, TelegramObject
+from telegram.ext import ConversationHandler, filters
 from telegram.helpers import escape_markdown
 
 from core.basemodel import RegionEnum
@@ -18,6 +18,10 @@ from core.services.players.services import PlayersService, PlayerInfoService
 from gram_core.services.devices import DevicesService
 from modules.apihelper.models.genshin.cookies import CookiesModel
 from utils.log import logger
+
+if TYPE_CHECKING:
+    from telegram import Update
+    from telegram.ext import ContextTypes
 
 __all__ = ("AccountCookiesPlugin",)
 
@@ -66,7 +70,7 @@ class AccountCookiesPlugin(Plugin.Conversation):
         self.player_info_service = player_info_service
         self.devices_service = devices_service
 
-    async def _parse_args(self, update: Update, context: CallbackContext) -> Optional[int]:
+    async def _parse_args(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> Optional[int]:
         args = self.get_args(context)
         account_cookies_plugin_data: AccountCookiesPluginData = context.chat_data.get("account_cookies_plugin_data")
         if len(args) < 2:
@@ -80,14 +84,31 @@ class AccountCookiesPlugin(Plugin.Conversation):
             return ret
         return await self.check_cookies(update, context)
 
+    @staticmethod
+    async def quit_conversation(update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
+        message = update.effective_message
+        context.chat_data.pop("account_cookies_plugin_data", None)
+        await message.reply_text("退出任务", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
+    @staticmethod
+    async def has_another_conversation(update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> Optional[int]:
+        if context.chat_data.get("bind_account_plugin_data") is not None:
+            message = update.effective_message
+            await message.reply_text("你已经有一个绑定任务在进行中，请先退出后再试")
+            return ConversationHandler.END
+        return None
+
     @conversation.entry_point
     @handler.command(command="setcookie", filters=filters.ChatType.PRIVATE, block=False)
     @handler.command(command="setcookies", filters=filters.ChatType.PRIVATE, block=False)
-    @handler.command(command="start", filters=filters.Regex("set_cookie$"), block=False)
-    async def command_start(self, update: Update, context: CallbackContext) -> int:
+    @handler.command(command="start", filters=filters.ChatType.PRIVATE & filters.Regex("set_cookie$"), block=False)
+    async def command_start(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
         user = update.effective_user
         message = update.effective_message
-        logger.info("用户 %s[%s] 绑定账号命令请求", user.full_name, user.id)
+        logger.info("用户 %s[%s] 绑定账号命令请求 cookie", user.full_name, user.id)
+        if await self.has_another_conversation(update, context) is not None:
+            return ConversationHandler.END
         account_cookies_plugin_data: AccountCookiesPluginData = context.chat_data.get("account_cookies_plugin_data")
         if account_cookies_plugin_data is None:
             account_cookies_plugin_data = AccountCookiesPluginData()
@@ -105,12 +126,11 @@ class AccountCookiesPlugin(Plugin.Conversation):
 
     @conversation.state(state=CHECK_SERVER)
     @handler.message(filters=filters.TEXT & ~filters.COMMAND, block=False)
-    async def check_server(self, update: Update, context: CallbackContext) -> int:
+    async def check_server(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
         message = update.effective_message
         account_cookies_plugin_data: AccountCookiesPluginData = context.chat_data.get("account_cookies_plugin_data")
         if message.text == "退出":
-            await message.reply_text("退出任务", reply_markup=ReplyKeyboardRemove())
-            return ConversationHandler.END
+            return await self.quit_conversation(update, context)
         if message.text == "库街区":
             region = RegionEnum.HYPERION
             bbs_name = "库街区"
@@ -128,17 +148,16 @@ class AccountCookiesPlugin(Plugin.Conversation):
 
     @conversation.state(state=INPUT_COOKIES)
     @handler.message(filters=filters.TEXT & ~filters.COMMAND, block=False)
-    async def input_cookies(self, update: Update, context: CallbackContext) -> int:
+    async def input_cookies(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
         message = update.effective_message
         if message.text == "退出":
-            await message.reply_text("退出任务", reply_markup=ReplyKeyboardRemove())
-            return ConversationHandler.END
+            return await self.quit_conversation(update, context)
         if ret := await self.parse_cookies(update, context, message.text):
             return ret
         return await self.check_cookies(update, context)
 
     @staticmethod
-    async def parse_cookies(update: Update, context: CallbackContext, text: str) -> Optional[int]:
+    async def parse_cookies(update: "Update", context: "ContextTypes.DEFAULT_TYPE", text: str) -> Optional[int]:
         user = update.effective_user
         message = update.effective_message
         account_cookies_plugin_data: AccountCookiesPluginData = context.chat_data.get("account_cookies_plugin_data")
@@ -151,7 +170,7 @@ class AccountCookiesPlugin(Plugin.Conversation):
         }
         account_cookies_plugin_data.cookies = cookies
 
-    async def check_cookies(self, update: Update, context: CallbackContext) -> int:
+    async def check_cookies(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
         user = update.effective_user
         message = update.effective_message
         account_cookies_plugin_data: AccountCookiesPluginData = context.chat_data.get("account_cookies_plugin_data")
@@ -278,13 +297,12 @@ class AccountCookiesPlugin(Plugin.Conversation):
 
     @conversation.state(state=COMMAND_RESULT)
     @handler.message(filters=filters.TEXT & ~filters.COMMAND, block=False)
-    async def command_result(self, update: Update, context: CallbackContext) -> int:
+    async def command_result(self, update: "Update", context: "ContextTypes.DEFAULT_TYPE") -> int:
         user = update.effective_user
         message = update.effective_message
         account_cookies_plugin_data: AccountCookiesPluginData = context.chat_data.get("account_cookies_plugin_data")
         if message.text == "退出":
-            await message.reply_text("退出任务", reply_markup=ReplyKeyboardRemove())
-            return ConversationHandler.END
+            return await self.quit_conversation(update, context)
         if message.text == "确认":
             genshin_account = account_cookies_plugin_data.genshin_account
             await self.update_player(
