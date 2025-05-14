@@ -36,6 +36,26 @@
           </span>
         </div>
     </div>
+    <div class="item">
+        {% set is_reserve_stamina_full = current_reserve_stamina == max_reserve_stamina %}
+        <div class="main">
+          <div class="bg"></div>
+          <img class="icon" src="items/结晶单质.png" alt="" />
+          <div class="info">
+            <div class="name">结晶单质</div>
+            {% if is_reserve_stamina_full %}
+            <div class="time">结晶单质已满</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="right">
+          <span
+            class="{% if is_reserve_stamina_full %}red{% endif %}"
+          >
+            {{ current_reserve_stamina }}/{{ max_reserve_stamina }}
+          </span>
+        </div>
+    </div>
     {% if liveness_unlock %}
     <div class="item">
         <div class="main">
@@ -59,6 +79,26 @@
         </div>
     </div>
     {% endif %}
+    <div class="item">
+        <div class="main">
+          <div class="bg"></div>
+          <img class="icon" src="items/隐雷声核.png" alt="" />
+          <div class="info">
+            <div class="name">战歌重奏</div>
+              <div class="time">
+                  {% if remaining_resin_discounts<=0 %}周本已完成
+                  {% else %}周本收取次数剩余{% endif %}
+              </div>
+          </div>
+        </div>
+        <div class="right">
+          <span
+            class="{% if remaining_resin_discounts > 0 %}red{% endif %}"
+          >
+            {{ remaining_resin_discounts }}/{{ max_resin_discounts }}
+          </span>
+        </div>
+    </div>
     {% for battle in battle_pass_data %}
     <div class="item">
         <div class="main">

@@ -59,9 +59,19 @@ class PlayerStatsPlugins(Plugin):
         user_info = await client.get_mc_notes(uid, auto_refresh=False)
         explor = await client.get_mc_explorer(uid, auto_refresh=False)
 
+        stats = user_info.model_dump()
+        box_list = []
+        for idx, i in enumerate(user_info.treasureBoxList):
+            box_list.append((i.name, f"boxList{idx}"))
+            stats[f"boxList{idx}"] = i.num
+        phantom_box_list = []
+        for idx, i in enumerate(user_info.phantomBoxList):
+            phantom_box_list.append((i.name, f"phantomBoxList{idx}"))
+            stats[f"phantomBoxList{idx}"] = i.num
+
         data = {
             "uid": mask_number(uid),
-            "stats": user_info,
+            "stats": stats,
             "stats_labels": [
                 ("活跃天数", "activeDays"),
                 ("联觉等级", "level"),
@@ -71,8 +81,10 @@ class PlayerStatsPlugins(Plugin):
                 ("成就星数", "achievementStar"),
                 ("小型信标", "smallCount"),
                 ("中型信标", "bigCount"),
+                *box_list,
+                *phantom_box_list,
             ],
-            "area": explor.exploreList[0].areaInfoList,
+            "countries": explor.exploreList,
             "style": "huanglong",  # nosec
         }
 

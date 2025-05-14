@@ -34,12 +34,6 @@
               <div class="text-neutral-400 box-stats-label">{{ label }}</div>
             </div>
             {% endfor %}
-            {% for box in stats.boxList %}
-            <div class="">
-              <div class="text-xl box-stats">{{ box.num }}</div>
-              <div class="text-neutral-400 box-stats-label">{{ box.boxName }}</div>
-            </div>
-            {% endfor %}
           </div>
         </div>
 
@@ -48,22 +42,25 @@
             世界探索
           </h2>
           <div class="p-6 grid grid-cols-4 gap-4 text-center text-neutral-100">
-            {% for e in area %}
-                {% if e.areaId not in skip_explor %}
-                    <div
-                            class="w-full flex flex-col items-center rounded-lg p-2 space-y-1 bg-cover"
-                    >
-                        <img class="w-3/5" src="" />
-                        <div class="text-sm w-full truncate">{{ e.areaName }}</div>
-                        <div class="text-xs">{{ e.areaProgress }}%</div>
-                        <div class="pointer-bar">
-                            <div
-                                class="pointer-progress-bar"
-                                style="width: {{ e.areaProgress }}%"
-                            ></div>
+            {% for country in countries %}
+                {% for e in country.areaInfoList %}
+                    {% if e.areaId not in skip_explor %}
+                        <div
+                            class="w-full flex flex-col items-center rounded-lg p-2 space-y-1 bg-cover relative"
+                            style="background-image: url('{{ e.areaPic }}');"
+                        >
+                            <div class="absolute inset-0 bg-black bg-opacity-30 rounded-lg"></div>
+                            <div class="relative z-10 text-sm w-full truncate text-white">{{ e.areaName }}</div>
+                            <div class="relative z-10 text-xs text-white">{{ e.areaProgress }}%</div>
+                            <div class="relative z-10 pointer-bar w-full">
+                                <div
+                                    class="pointer-progress-bar"
+                                    style="width: {{ e.areaProgress }}%"
+                                ></div>
+                            </div>
                         </div>
-                    </div>
-                {% endif %}
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
           </div>
         </div>
