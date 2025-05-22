@@ -59,7 +59,7 @@ roles = {
     1607: ["坎特蕾拉", "cantarella"],
 }
 traveler_roles = [1501, 1502, 1604, 1605, 1406, 1408]
-not_real_roles = [1407]
+not_real_roles = []
 weapons = {
     21010011: ["教学长刃"],
     21010012: ["原初长刃·朴石"],
