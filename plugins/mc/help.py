@@ -1,5 +1,4 @@
 from telegram import Update
-from telegram.constants import ChatAction
 from telegram.ext import CallbackContext, filters
 
 from core.plugin import Plugin, handler
@@ -20,12 +19,4 @@ class HelpPlugin(Plugin):
     async def start(self, update: Update, _: CallbackContext):
         message = update.effective_message
         self.log_user(update, logger.info, "发出help命令")
-        await message.reply_chat_action(ChatAction.TYPING)
-        render_result = await self.template_service.render(
-            "bot/help/help.jinja2",
-            {"bot_username": self.application.bot.username},
-            {"width": 1280, "height": 900},
-            ttl=30 * 24 * 60 * 60,
-        )
-        await message.reply_chat_action(ChatAction.UPLOAD_PHOTO)
-        await render_result.reply_photo(message, filename="help.png")
+        await message.reply_text("https://t.me/PaiGramTeam/148")
