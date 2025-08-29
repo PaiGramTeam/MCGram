@@ -112,6 +112,9 @@ class Post(Plugin.Conversation):
             logger.error("获取首页推荐信息失败 %s", str(exc))
             return
 
+        if "data" not in official_recommended_posts:
+            return
+
         for data_list in official_recommended_posts["data"]["list"]:
             temp_post_id_list.append(data_list["postId"])
 
