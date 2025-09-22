@@ -91,8 +91,18 @@ class Post(Plugin.Conversation):
     async def initialize(self):
         if config.channels and len(config.channels) > 0:
             logger.success("文章定时推送处理已经开启")
-            self.application.job_queue.run_repeating(self.task, 60)
-        logger.success("文章定时推送处理已经开启")
+            job_kwargs = {
+                "trigger": "cron",
+                "hour": "21-23,0-5",
+                "minute": "*/30",
+            }
+            self.application.job_queue.run_custom(self.task, job_kwargs=job_kwargs, name="post_task.idle")
+            job_kwargs2 = {
+                "trigger": "cron",
+                "hour": "6-20",
+                "minute": "*/2",
+            }
+            self.application.job_queue.run_custom(self.task, job_kwargs=job_kwargs2, name="post_task.busy")
         output, _ = await self.execute("ffmpeg -version")
         if "ffmpeg version" in output:
             self.ffmpeg_enable = True
