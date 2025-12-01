@@ -4,7 +4,7 @@ import re
 from typing import List
 
 from ..base.hyperionrequest import HyperionRequest
-from ...models.genshin.hyperion import PostInfo, ArtworkImage
+from ...models.genshin.hyperion import PostRecommend, PostInfo, ArtworkImage
 from ...typedefs import JSON_DATA
 
 __all__ = ("MCBBS",)
@@ -90,10 +90,12 @@ class MCBBS:
         )
         return {"x-oss-process": params}
 
-    async def get_official_recommended_posts(self, game_id: int) -> JSON_DATA:
-        data = {"forumId": "9", "gameId": str(game_id), "pageSize": "10", "pageNo": "1", "eventType": ""}
+    async def get_official_recommended_posts(self, game_id: int, page_size: int = 10) -> list["PostRecommend"]:
+        data = {"forumId": "9", "gameId": str(game_id), "pageSize": str(page_size), "pageNo": "1", "eventType": ""}
         response = await self.client.post(url=self.GET_OFFICIAL_RECOMMENDED_POSTS_URL, data=data)
-        return response
+        if "data" not in response:
+            return []
+        return [PostRecommend.parse(data_list) for data_list in response["data"]["list"]]
 
     async def get_post_info(self, post_id: int) -> PostInfo:
         data = {

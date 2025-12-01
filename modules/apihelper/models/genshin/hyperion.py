@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, PrivateAttr
 
-__all__ = ("ArtworkImage", "PostInfo")
+__all__ = ("ArtworkImage", "PostInfo", "PostRecommend")
 
 
 class ArtworkImage(BaseModel):
@@ -66,7 +66,18 @@ class ArtworkImage(BaseModel):
 PATTERN = re.compile(r"关注(.*?)，获取更多(.*?)")
 
 
-class PostInfo(BaseModel):
+class PostRecommend(BaseModel):
+    post_id: int
+    subject: str = ""
+
+    @classmethod
+    def parse(cls, data: dict) -> "PostRecommend":
+        post_id = data.get("postId", 0)
+        subject = data.get("postTitle", "")
+        return PostRecommend(post_id=post_id, subject=subject)
+
+
+class PostInfo(PostRecommend):
     _data: dict = PrivateAttr()
     post_id: int
     subject: str

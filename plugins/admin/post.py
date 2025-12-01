@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     from telegram import Update, Message
     from telegram.ext import ContextTypes
 
+    from modules.apihelper.models.genshin.hyperion import PostRecommend
+
 
 class PostHandlerData:
     def __init__(self):
@@ -50,6 +52,7 @@ class PostConfig(Settings):
     """文章推送配置"""
 
     chat_id: Optional[int] = 0
+    chat_ids: List[int] = []
 
     model_config = SettingsConfigDict(env_prefix="post_")
 
@@ -71,7 +74,7 @@ class Post(Plugin.Conversation):
     )
 
     def __init__(self):
-        self.gids = 3
+        self.gids = [3]
         self.short_name = "mc"
         self.last_post_id_list: List[int] = []
         self.ffmpeg_enable = False
@@ -113,22 +116,21 @@ class Post(Plugin.Conversation):
 
     async def task(self, context: "ContextTypes.DEFAULT_TYPE"):
         bbs = self.get_bbs_client()
-        temp_post_id_list: List[int] = []
 
         # 请求推荐POST列表并处理
+        official_recommended_posts = []
         try:
-            official_recommended_posts = await bbs.get_official_recommended_posts(self.gids)
+            for gid in self.gids:
+                official_recommended_posts.extend(await bbs.get_official_recommended_posts(gid))
+            await bbs.close()
         except APIHelperException as exc:
             logger.error("获取首页推荐信息失败 %s", str(exc))
             return
 
-        if "data" not in official_recommended_posts:
-            return
-
-        for data_list in official_recommended_posts["data"]["list"]:
-            temp_post_id_list.append(data_list["postId"])
-
         # 判断是否为空
+        if not official_recommended_posts:
+            return
+        temp_post_id_list = [post.post_id for post in official_recommended_posts]
         if len(self.last_post_id_list) == 0:
             for temp_list in temp_post_id_list:
                 self.last_post_id_list.append(temp_list)
@@ -136,39 +138,42 @@ class Post(Plugin.Conversation):
 
         # 筛选出新推送的文章
         new_post_id_list = set(temp_post_id_list).difference(set(self.last_post_id_list))
-
         if not new_post_id_list:
             return
-
+        new_post_list = [post for post in official_recommended_posts if post.post_id in new_post_id_list]
         self.last_post_id_list = temp_post_id_list
-        chat_id = post_config.chat_id or config.owner
 
-        for post_id in new_post_id_list:
-            try:
-                post_info = await bbs.get_post_info(post_id)
-            except (APIHelperException, KeyError) as exc:
-                logger.error("获取文章信息失败 %s", str(exc))
-                text = f"获取 post_id[{post_id}] 文章信息失败 {str(exc)}"
-                try:
-                    await context.bot.send_message(chat_id, text)
-                except BadRequest as _exc:
-                    logger.error("发送消息失败 %s", _exc.message)
-                continue
+        await self.task_send_message(context, new_post_list)
+
+    async def task_send_message(
+        self,
+        context: "ContextTypes.DEFAULT_TYPE",
+        new_post_id_list: list["PostRecommend"],
+    ):
+        chat_ids = post_config.chat_ids or post_config.chat_id or config.owner
+        if not isinstance(chat_ids, list):
+            chat_ids = [chat_ids]
+
+        for post in new_post_id_list:
+            post_id = post.post_id
             buttons = [
                 [
-                    InlineKeyboardButton("确认", callback_data=f"post_admin|confirm|{post_info.post_id}"),
-                    InlineKeyboardButton("取消", callback_data=f"post_admin|cancel|{post_info.post_id}"),
+                    InlineKeyboardButton("确认", callback_data=f"post_admin|confirm|{post_id}"),
+                    InlineKeyboardButton("取消", callback_data=f"post_admin|cancel|{post_id}"),
                 ]
             ]
-            url = f"https://www.kurobbs.com/{self.short_name}/post/{post_info.post_id}"
-            text = f"发现官网推荐文章 <a href='{url}'>{escape_html(post_info.subject)}</a>\n是否开始处理"
-            try:
-                await context.bot.send_message(
-                    chat_id, text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons)
-                )
-            except BadRequest as exc:
-                logger.error("发送消息失败 %s", exc.message)
-        await bbs.close()
+            url = f"https://www.kurobbs.com/{self.short_name}/post/{post.post_id}"
+            text = f"发现官网推荐文章 <a href='{url}'>{escape_html(post.subject)}</a>\n是否开始处理"
+            for chat_id in chat_ids:
+                try:
+                    await context.bot.send_message(
+                        chat_id,
+                        text,
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=InlineKeyboardMarkup(buttons),
+                    )
+                except BadRequest as exc:
+                    logger.error("发送消息失败 %s", exc.message)
 
     @staticmethod
     def parse_post_text(soup: BeautifulSoup, post_subject: str) -> Tuple[str, bool]:
