@@ -82,6 +82,7 @@ class PostInfo(PostRecommend):
     post_id: int
     subject: str
     image_urls: List[str]
+    video_id: str
     created_at: str
 
     def __init__(self, _data: dict, **data: Any):
@@ -112,12 +113,14 @@ class PostInfo(PostRecommend):
                 if image_url:
                     image_urls2.append(image_url)
         image_urls = image_urls2 or image_urls1
+        video_id = post.get("videoId", "")
         created_at = post.get("postTime", "")
         return PostInfo(
             _data=data,
             post_id=post_id,
             subject=subject,
             image_urls=image_urls,
+            video_id=video_id,
             created_at=created_at,
         )
 

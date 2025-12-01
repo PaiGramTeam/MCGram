@@ -4,8 +4,8 @@ import re
 from typing import List
 
 from ..base.hyperionrequest import HyperionRequest
+from ...models.genshin.aliplayer_decrypt import authkey_to_encrypt_data, get_query_str
 from ...models.genshin.hyperion import PostRecommend, PostInfo, ArtworkImage
-from ...typedefs import JSON_DATA
 
 __all__ = ("MCBBS",)
 
@@ -135,6 +135,27 @@ class MCBBS:
         return ArtworkImage.gen(
             art_id=art_id, page=page, file_name=filename, file_extension=url.split(".")[-1], data=response.content
         )
+
+    async def refresh_play_code(self, video_id: str) -> dict:
+        data = {"videoId": str(video_id)}
+        response = await self.client.post("https://api.kurobbs.com/forum/video/refreshPlayCode", data=data)
+        play_auth = response.get("data", {}).get("playAuth", "")
+        if not play_auth:
+            raise ValueError("Failed to refresh play code.")
+        return authkey_to_encrypt_data(play_auth)
+
+    async def get_video_url(self, video_id: str) -> str:
+        play_auth = await self.refresh_play_code(video_id)
+        params = get_query_str(play_auth)
+        url = f"https://vod.cn-shanghai.aliyuncs.com/?{params}"
+        response = await self.client.get(url)
+        info = response.get("PlayInfoList", {}).get("PlayInfo", [])
+        if not info:
+            raise ValueError("Failed to get video URL.")
+        video_url = info[-1].get("PlayURL", "")
+        if not video_url:
+            raise ValueError("Video URL is empty.")
+        return video_url
 
     async def close(self):
         await self.client.shutdown()

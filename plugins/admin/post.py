@@ -374,6 +374,10 @@ class Post(Plugin.Conversation):
         bbs = self.get_bbs_client()
         post_info = await bbs.get_post_info(post_id)
         post_images = await bbs.get_images_by_post_id(post_info)
+        try:
+            video_url = await bbs.get_video_url(post_info.video_id) if post_info.video_id else None
+        except ValueError:
+            video_url = None
         await bbs.close()
         post_images = await self.gif_to_mp4(post_images)
         post_data = post_info["data"]["postDetail"]
@@ -384,6 +388,8 @@ class Post(Plugin.Conversation):
             post_text = self.safe_cut(post_text, max_len)
             await message.reply_text(f"警告！图片字符描述已经超过 {max_len} 个字，已经切割")
         post_text += f"\n[source](https://www.kurobbs.com/{self.short_name}/post/{post_id})"
+        if video_url:
+            await message.reply_text(f"检测到视频，需要单独下载，视频链接：{video_url}")
         try:
             if len(post_images) > 1:
                 media = [self.input_media(img_info) for img_info in post_images if not img_info.is_error]
