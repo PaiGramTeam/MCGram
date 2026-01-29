@@ -234,7 +234,3 @@ class AssetsService(BaseService.Dependence):
         self.client = AsyncClient(timeout=60.0)
         self.avatar = _AvatarAssets(self.client)
         self.weapon = _WeaponAssets(self.client)
-
-    async def initialize(self):  # pylint: disable=W0221
-        await self.avatar.initialize()
-        await self.weapon.initialize()
