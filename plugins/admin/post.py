@@ -123,7 +123,7 @@ class Post(Plugin.Conversation):
             job_kwargs2 = {
                 "trigger": "cron",
                 "hour": "6-20",
-                "minute": "*/1",
+                "minute": "*/2",
             }
             self.application.job_queue.run_custom(self.task_all, job_kwargs=job_kwargs2, name="post_task.busy")
         output, _ = await self.execute("ffmpeg -version")
@@ -254,6 +254,7 @@ class Post(Plugin.Conversation):
                 too_long = True
         else:
             post_text += f"{escape_markdown(soup.get_text(), version=2)}\n"
+        post_text = re.sub(r"\n{3,}", "\n\n", post_text).strip()
         return post_text, too_long
 
     @staticmethod
