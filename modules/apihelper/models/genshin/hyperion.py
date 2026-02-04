@@ -1,11 +1,12 @@
 import re
+from enum import Enum
 from io import BytesIO
 from typing import Any, List, Optional
 
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, PrivateAttr
 
-__all__ = ("ArtworkImage", "PostInfo", "PostRecommend")
+__all__ = ("ArtworkImage", "PostInfo", "PostRecommend", "PostTypeEnum")
 
 
 class ArtworkImage(BaseModel):
@@ -84,6 +85,20 @@ class PostRecommend(BaseModel):
         subject = data.get("postTitle", "")
         return PostRecommend(post_id=post_id, subject=subject)
 
+    @property
+    def type_enum(self) -> "PostTypeEnum":
+        return PostTypeEnum.CN
+
+    @property
+    def short_name(self) -> str:
+        return "mc"
+
+    def get_url(self) -> str:
+        return f"https://www.kurobbs.com/{self.short_name}/post/{self.post_id}"
+
+    def get_fix_url(self) -> str:
+        return self.get_url()
+
 
 class PostInfo(PostRecommend):
     _data: dict = PrivateAttr()
@@ -134,3 +149,11 @@ class PostInfo(PostRecommend):
 
     def __getitem__(self, item):
         return self._data[item]
+
+
+class PostTypeEnum(str, Enum):
+    """社区类型枚举"""
+
+    NULL = "null"
+    CN = "cn"
+    OS = "os"
