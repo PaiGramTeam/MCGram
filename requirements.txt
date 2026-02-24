@@ -12,9 +12,7 @@ aiosignal==1.4.0
     # via aiohttp
 aiosqlite==0.22.1
     # via mcgram
-alembic==1.16.5 ; python_full_version < '3.10'
-    # via mcgram
-alembic==1.18.3 ; python_full_version >= '3.10'
+alembic==1.18.4
     # via mcgram
 annotated-doc==0.0.4
     # via fastapi
@@ -29,9 +27,7 @@ apscheduler==3.11.2
     # via python-telegram-bot
 arko-wrapper==0.3.0
     # via mcgram
-async-lru==2.0.5 ; python_full_version < '3.10'
-    # via mcgram
-async-lru==2.1.0 ; python_full_version >= '3.10'
+async-lru==2.2.0
     # via mcgram
 async-timeout==5.0.1 ; python_full_version < '3.11.3'
     # via
@@ -56,11 +52,7 @@ certifi==2026.1.4
     #   sentry-sdk
 cffi==2.0.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
-click==8.1.8 ; python_full_version < '3.10'
-    # via
-    #   black
-    #   uvicorn
-click==8.3.1 ; python_full_version >= '3.10'
+click==8.3.1
     # via
     #   black
     #   uvicorn
@@ -82,9 +74,9 @@ exceptiongroup==1.3.1 ; python_full_version < '3.11'
     # via
     #   anyio
     #   pytest
-fakeredis==2.33.0
+fakeredis==2.34.0
     # via mcgram
-fastapi==0.128.0
+fastapi==0.133.0
     # via mcgram
 flaky==3.8.1
     # via mcgram
@@ -92,7 +84,7 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-gcsim-pypi==2.40.0
+gcsim-pypi==2.41.1
     # via mcgram
 gitdb==4.0.12
     # via gitpython
@@ -122,9 +114,7 @@ idna==3.11
     #   anyio
     #   httpx
     #   yarl
-iniconfig==2.1.0 ; python_full_version < '3.10'
-    # via pytest
-iniconfig==2.3.0 ; python_full_version >= '3.10'
+iniconfig==2.3.0
     # via pytest
 jinja2==3.1.6
     # via mcgram
@@ -134,9 +124,7 @@ lxml==5.4.0
     # via mcgram
 mako==1.3.10
     # via alembic
-markdown-it-py==3.0.0 ; python_full_version < '3.10'
-    # via rich
-markdown-it-py==4.0.0 ; python_full_version >= '3.10'
+markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.3
     # via
@@ -160,9 +148,7 @@ pathspec==1.0.4
     # via black
 pillow==10.4.0
     # via mcgram
-platformdirs==4.4.0 ; python_full_version < '3.10'
-    # via black
-platformdirs==4.5.1 ; python_full_version >= '3.10'
+platformdirs==4.9.2
     # via black
 playwright==1.48.0
     # via mcgram
@@ -176,9 +162,7 @@ psutil==7.2.2
     # via mcgram
 pyaes==1.6.1
     # via pyrogram
-pycparser==2.23 ; python_full_version < '3.10' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
-    # via cffi
-pycparser==3.0 ; python_full_version >= '3.10' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
     # via cffi
 pydantic==2.12.5
     # via
@@ -190,9 +174,7 @@ pydantic==2.12.5
     #   sqlmodel
 pydantic-core==2.41.5
     # via pydantic
-pydantic-settings==2.11.0 ; python_full_version < '3.10'
-    # via mcgram
-pydantic-settings==2.12.0 ; python_full_version >= '3.10'
+pydantic-settings==2.13.1
     # via mcgram
 pyee==12.0.0
     # via playwright
@@ -202,7 +184,7 @@ pygments==2.19.2
     #   rich
 pyjwt==2.11.0
     # via redis
-pyrogram @ git+https://github.com/TeamPGM/pyrogram@9111c741b979a21614453edbb440b67c4ecd2ce6
+pyrogram @ git+https://github.com/TeamPGM/pyrogram@fbf9582b933fd1a500d81bb0868007e74564dfde
     # via mcgram
 pyrotgcrypto==1.2.7
     # via mcgram
@@ -221,23 +203,19 @@ python-dotenv==1.2.1
     #   uvicorn
 python-genshin-artifact==1.0.14
     # via mcgram
-python-telegram-bot==22.5 ; python_full_version < '3.10'
-    # via mcgram
-python-telegram-bot==22.6 ; python_full_version >= '3.10'
+python-telegram-bot==22.6
     # via mcgram
 pyyaml==6.0.3
     # via uvicorn
-rapidfuzz==3.13.0 ; python_full_version < '3.10'
-    # via thefuzz
-rapidfuzz==3.14.3 ; python_full_version >= '3.10'
+rapidfuzz==3.14.3
     # via thefuzz
 redis==5.3.1
     # via
     #   fakeredis
     #   mcgram
-rich==14.3.2
+rich==14.3.3
     # via mcgram
-sentry-sdk==2.51.0
+sentry-sdk==2.53.0
     # via mcgram
 smmap==5.0.2
     # via gitdb
@@ -249,11 +227,9 @@ sqlalchemy==2.0.46
     # via
     #   alembic
     #   sqlmodel
-sqlmodel==0.0.32
+sqlmodel==0.0.37
     # via mcgram
-starlette==0.49.3 ; python_full_version < '3.10'
-    # via fastapi
-starlette==0.50.0 ; python_full_version >= '3.10'
+starlette==0.52.1
     # via fastapi
 thefuzz==0.22.1
     # via mcgram
@@ -276,18 +252,17 @@ typing-extensions==4.15.0
     #   exceptiongroup
     #   fakeredis
     #   fastapi
-    #   gitpython
     #   multidict
     #   pydantic
     #   pydantic-core
     #   pyee
-    #   pytest-asyncio
     #   sqlalchemy
     #   starlette
     #   typing-inspection
     #   uvicorn
 typing-inspection==0.4.2
     # via
+    #   fastapi
     #   pydantic
     #   pydantic-settings
 tzdata==2025.3 ; sys_platform == 'win32'
@@ -298,17 +273,13 @@ ujson==5.11.0
     # via mcgram
 urllib3==2.6.3
     # via sentry-sdk
-uvicorn==0.39.0 ; python_full_version < '3.10'
-    # via mcgram
-uvicorn==0.40.0 ; python_full_version >= '3.10'
+uvicorn==0.41.0
     # via mcgram
 uvloop==0.22.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'
     # via uvicorn
 watchfiles==1.1.1
     # via uvicorn
-websockets==15.0.1 ; python_full_version < '3.10'
-    # via uvicorn
-websockets==16.0 ; python_full_version >= '3.10'
+websockets==16.0
     # via uvicorn
 yarl==1.22.0
     # via aiohttp
